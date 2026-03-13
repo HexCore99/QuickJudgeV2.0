@@ -1,13 +1,15 @@
-import { Children } from "react";
+import { Outlet } from "react-router-dom";
+import Navbar from "./Navbar";
+import Footer from "./Footer";
 
-function PublicLayout({ children }) {
+function PublicLayout() {
   return (
-    <div>
-      <div className="min-h-screen bg-[#edf1f5] text-slate-800">
-        <div className="mx-auto max-w-360 overflow-hidden rounded-2xl border border-slate-300/80 bg[#edf1f5]">
-          {children}
-        </div>
-      </div>
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      <Navbar />
+      <main>
+        <Outlet />
+      </main>
+      <Footer />
     </div>
   );
 }

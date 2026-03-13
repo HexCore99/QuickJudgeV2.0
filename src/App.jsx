@@ -1,12 +1,7 @@
-import { useState } from 'react'
-import LandingPage from './pages/public/LandingPage'
-
+import { RouterProvider } from "react-router-dom";
+import router from "./routes/AppRouter";
 function App() {
-  const [count, setCount] = useState(0)
-
-  return (
-    <LandingPage/>
-  )
+  return <RouterProvider router={router} />;
 }
 
-export default App
+export default App;
