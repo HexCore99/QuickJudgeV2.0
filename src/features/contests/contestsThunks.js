@@ -1,5 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { getContestsApi } from "./contestsApi";
+import {
+  getContestDetailsApi,
+  getContestsApi,
+  verifyContestPasswordApi,
+} from "./contestsApi";
 
 export const fetchContests = createAsyncThunk(
   "contests/fetchContests",
@@ -9,6 +13,32 @@ export const fetchContests = createAsyncThunk(
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.message || "Failed to fetch contests.",
+      );
+    }
+  },
+);
+
+export const verifyContestPassword = createAsyncThunk(
+  "contests/verifyContestPassword",
+  async ({ contestId, password }, thunkAPI) => {
+    try {
+      return await verifyContestPasswordApi({ contestId, password });
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Password verification failed.",
+      );
+    }
+  },
+);
+
+export const fetchContestDetails = createAsyncThunk(
+  "contests/fetchContestDetails",
+  async (contestId, thunkAPI) => {
+    try {
+      return await getContestDetailsApi(contestId);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to fetch contest details.",
       );
     }
   },

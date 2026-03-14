@@ -1,4 +1,5 @@
 import { CalendarDays, Lock } from "lucide-react";
+import AppButton from "../common/AppButton";
 
 function getBadgeClasses(status) {
   if (status === "live") {
@@ -17,10 +18,11 @@ function getBadgeText(status) {
   return "ENDED";
 }
 
-function ContestListCard({ contest }) {
+function ContestListCard({ contest, onEnterContest, onViewResult }) {
   const isLive = contest.status === "live";
   const isUpcoming = contest.status === "upcoming";
   const isEnded = contest.status === "ended";
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4">
       <span
@@ -46,25 +48,33 @@ function ContestListCard({ contest }) {
 
       <div className="mt-4">
         {isLive ? (
-          <button className="inline-flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">
-            Enter Contest
-          </button>
-        ) : null}
-
-        {isUpcoming ? (
-          <button
-            disabled
-            className="inline-flex cursor-not-allowed items-center gap-2 rounded-lg bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-400"
+          <AppButton
+            onClick={() => {
+              onEnterContest?.(contest);
+            }}
+            variant="primary"
+            className="gap-2"
           >
             <Lock size={14} />
             Enter Contest
-          </button>
+          </AppButton>
+        ) : null}
+
+        {isUpcoming ? (
+          <AppButton variant="secondary" className="gap-2">
+            <Lock size={14} />
+            Enter Contest
+          </AppButton>
         ) : null}
 
         {isEnded ? (
-          <button className="rounded-lg border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+          <AppButton
+            onClick={() => onViewResult?.(contest)}
+            variant="secondary"
+            className="gap-2"
+          >
             View Results
-          </button>
+          </AppButton>
         ) : null}
       </div>
     </div>

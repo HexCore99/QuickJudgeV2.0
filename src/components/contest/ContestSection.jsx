@@ -1,6 +1,12 @@
 import ContestListCard from "./ContestListCard";
 
-function ContestSection({ title, icon, contests }) {
+function ContestSection({
+  title,
+  icon,
+  contests,
+  onEnterContest,
+  onViewResult,
+}) {
   return (
     <section className="rounded-2xl border border-slate-100 bg-slate-300 px-10 py-5 shadow-sm">
       <div className="mb-3 flex items-center gap-2">
@@ -10,7 +16,12 @@ function ContestSection({ title, icon, contests }) {
 
       <div className="space-y-4">
         {contests.map((contest) => (
-          <ContestListCard key={contest.id} contest={contest} />
+          <ContestListCard
+            key={contest.id}
+            contest={contest}
+            onEnterContest={onEnterContest}
+            onViewContest={onViewResult}
+          />
         ))}
       </div>
     </section>

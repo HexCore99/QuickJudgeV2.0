@@ -41,7 +41,7 @@ function LoginPage() {
       navigate("/admin", { replace: true });
       return;
     }
-    navigate("/student", { replace: true });
+    navigate("/student/contest", { replace: true });
   }, [isAuthenticated, role, navigate]);
 
   function handleChange(e) {

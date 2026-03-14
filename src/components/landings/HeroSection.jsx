@@ -3,13 +3,13 @@ import { Terminal } from "lucide-react";
 function HeroSection() {
   const languages = ["C", "C++", "Java", "Python"];
   return (
-    <section className="mx-auto flex  min-h-[60vh] max-w-7xl flex-col items-center justify-center px-6 py-0.5 text-center">
-      <div className=" flex mb-5 rounded-full bg-slate-100 px-6 py-3 text-sm font-medium text-slate-500">
+    <section className="mx-auto flex min-h-[60vh] max-w-7xl flex-col items-center justify-center px-6 py-0.5 text-center">
+      <div className="mb-5 flex rounded-full bg-slate-100 px-6 py-3 text-sm font-medium text-slate-500">
         <Terminal />
         <span>Educational Online Judge</span>
       </div>
 
-      <h1 className="max-w-4xl font-mono text-4xl font-black leading-tight text-slate-900 md:text-5xl">
+      <h1 className="max-w-4xl font-mono text-4xl leading-tight font-black text-slate-900 md:text-5xl">
         Simple. Clean.
         <br />
         Problem Solving.
@@ -37,7 +37,10 @@ function HeroSection() {
 
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         {languages.map((lang) => (
-          <span className="rounded-full bg-slate-100 text-sm px-4 py-2 font-medium text-slate-500">
+          <span
+            key={lang}
+            className="rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-500"
+          >
             {lang}
           </span>
         ))}
