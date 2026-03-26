@@ -8,3 +8,7 @@ export default function ContestDetailsHeader({ title, statusText, duration }) {
     </div>
   );
 }
+/*
+TODOS:
+- Blinking Status
+*/

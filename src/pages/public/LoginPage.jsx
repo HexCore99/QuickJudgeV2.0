@@ -7,7 +7,7 @@ import AuthInput from "../../components/auth/AuthInput";
 import DemoAccess from "../../components/auth/DemoAccess";
 import { Link, useNavigate } from "react-router-dom";
 
-import { loginUser } from "../../features/auth/authThinks";
+import { loginUser } from "../../features/auth/authThunks";
 import { clearAuthError } from "../../features/auth/authSlice";
 
 import {

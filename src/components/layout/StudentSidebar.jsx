@@ -72,13 +72,13 @@ function StudentSidebar() {
               <span>Switch to Admin</span>
             </Link>
 
-            <button
-              type="button"
+            <Link
+              to="/"
               className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sky-400 transition hover:hover:bg-slate-800"
             >
               <LogOut size={18} />
               <span>Logout</span>
-            </button>
+            </Link>
           </div>
         </div>
       </aside>
