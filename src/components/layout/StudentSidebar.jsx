@@ -1,5 +1,6 @@
 // previous editing: import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { logout } from "../../features/auth/authSlice";
 import {
   ChevronLeft,
   LogOut,
@@ -13,13 +14,22 @@ import {
   FileText,
   Terminal,
 } from "lucide-react";
+import { useDispatch } from "react-redux";
+
 function StudentSidebar() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const navItems = [
     { label: "Contest", to: "/student/contest", icon: Trophy },
     { label: "Discussion", to: "/student/discussion", icon: MessageSquare },
     { label: "Problem Bank", to: "/student/problems", icon: BookOpen },
     { label: "Profile", to: "/student/profile", icon: User },
   ];
+
+  function handleLogout() {
+    dispatch(logout());
+    navigate("/", { replace: true });
+  }
   return (
     <>
       <aside className="flex h-full w-65 shrink-0 flex-col overflow-y-auto border-r border-slate-800 bg-[#0c1729] text-white">
@@ -72,13 +82,14 @@ function StudentSidebar() {
               <span>Switch to Admin</span>
             </Link>
 
-            <Link
-              to="/"
+            <button
+              type="button"
+              onClick={handleLogout}
               className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sky-400 transition hover:hover:bg-slate-800"
             >
               <LogOut size={18} />
               <span>Logout</span>
-            </Link>
+            </button>
           </div>
         </div>
       </aside>
