@@ -1,61 +1,31 @@
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms)); // Fake wait natok
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const demoUsers = [
-  {
-    id: "student-1",
-    name: "Student Demo",
-    email: "student@quickjudge.dev",
-    password: "123456",
-    role: "student",
-  },
-  {
-    id: "admin-1",
-    name: "Admin Demo",
-    email: "admin@quickjudge.dev",
-    password: "123456",
-    role: "admin",
-  },
-];
-
-export async function loginApi(credentials) {
-  await wait(700);
-  const { email, password } = credentials;
-  const foundUser = demoUsers.find(
-    (user) => user.email === email && user.password === password,
-  );
-  if (!foundUser) {
-    throw new Error("Invalid email or password");
+async function parseResponse(resp) {
+  const data = await resp.json();
+  if (!resp.ok) {
+    throw new Error(data.message || "Something went wrong");
   }
-
-  return {
-    user: {
-      id: foundUser.id,
-      name: foundUser.name,
-      email: foundUser.email,
-      role: foundUser.role,
-    },
-    token: `mock-token-${foundUser.role}`,
-  };
+  return data;
 }
 
 export async function signupApi(payload) {
-  await wait(800);
-  const { name, email, password } = payload;
-  if (!name || !email || !password) {
-    throw new Error("Please fill in all required fileds.");
-  }
-
-  if (password.length < 6) {
-    //Apadoto kisu korar dorkar nai
-  }
-
-  return {
-    user: {
-      id: crypto.randomUUID(),
-      name,
-      email,
-      role: "student",
+  const response = await fetch(`${API_URL}/api/auth/signup`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
     },
-    token: "mock-token-student",
-  };
+    body: JSON.stringify(payload),
+  });
+  return parseResponse(response);
+}
+
+export async function loginApi(payload) {
+  const response = await fetch(`${API_URL}/api/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+  return parseResponse(response);
 }
