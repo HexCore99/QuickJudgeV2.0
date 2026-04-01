@@ -53,20 +53,25 @@ function LoginPage() {
     dispatch(loginUser(formData));
   }
   function handleStudentDemo() {
-    dispatch(
-      loginUser({
-        email: "student@quickjudge.dev",
-        password: "123456",
-      }),
-    );
+    //:Bypassed login demo
+    navigate("/student/contest");
+    return;
+    // dispatch(
+    //   loginUser({
+    //     email: "student@quickjudge.dev",
+    //     password: "123456",
+    //   }),
+    // );
   }
   function handleAdminDemo() {
-    dispatch(
-      loginUser({
-        email: "admin@quickjudge.dev",
-        password: "123456",
-      }),
-    );
+    navigate("/student/admin");
+
+    // dispatch(
+    //   loginUser({
+    //     email: "admin@quickjudge.dev",
+    //     password: "123456",
+    //   }),
+    // );
   }
   return (
     <div>

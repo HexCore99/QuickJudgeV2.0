@@ -1,27 +1,16 @@
 import ContestListCard from "./ContestListCard";
+import ContestSectionTitle from "./ContestSectionTitle";
 
-function ContestSection({
-  title,
-  icon,
-  contests,
-  onEnterContest,
-  onViewResult,
-}) {
+function ContestSection({ title, icon, contests, type, live = false }) {
+  if (!contests.length) return null;
+
   return (
-    <section className="rounded-2xl border border-slate-100 bg-slate-300 px-10 py-5 shadow-sm">
-      <div className="mb-3 flex items-center gap-2">
-        <span className="text-slate-500">{icon}</span>
-        <h2 className="text-2xl font-black text-slate-900">{title}</h2>
-      </div>
+    <section className="mb-10">
+      <ContestSectionTitle title={title} icon={icon} live={live} />
 
-      <div className="space-y-4">
+      <div className="grid gap-4 xl:grid-cols-2">
         {contests.map((contest) => (
-          <ContestListCard
-            key={contest.id}
-            contest={contest}
-            onEnterContest={onEnterContest}
-            onViewContest={onViewResult}
-          />
+          <ContestListCard key={contest.id} contest={contest} type={type} />
         ))}
       </div>
     </section>
