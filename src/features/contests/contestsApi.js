@@ -1,141 +1,70 @@
-import {
-  contestFilters,
-  liveContests,
-  pastContests,
-  upcomingContests,
-} from "./contestsMockData";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+async function parseResponse(resp) {
+  const contentType = resp.headers.get("content-type") || "";
+  const isJson = contentType.includes("application/json");
 
-const clone = (value) => JSON.parse(JSON.stringify(value));
+  const data = isJson ? await resp.json() : await resp.text();
 
-const liveContestMap = Object.fromEntries(
-  liveContests.map((contest) => [contest.id, contest]),
-);
+  if (!resp.ok) {
+    if (isJson) {
+      throw new Error(data.message || "Something went wrong");
+    }
 
-const contestDetailsMap = {
-  "WC-43L": {
-    id: "WC-43L",
-    title: `QuickJudge ${liveContestMap["WC-43L"].name}`,
-    statusText: "LIVE",
-    duration: liveContestMap["WC-43L"].duration,
-    problems: [
-      {
-        id: "A",
-        title: "Minimum Path in DAG",
-        difficulty: "easy",
-        points: 100,
-      },
-      {
-        id: "B",
-        title: "Greedy Interval Merge",
-        difficulty: "medium",
-        points: 200,
-      },
-      { id: "C", title: "Tree Teleport", difficulty: "medium", points: 200 },
-      {
-        id: "D",
-        title: "Shortest Route Rebuild",
-        difficulty: "hard",
-        points: 300,
-      },
-    ],
-  },
+    throw new Error(`Request failed with status ${resp.status}`);
+  }
 
-  "BLZ-09L": {
-    id: "BLZ-09L",
-    title: `QuickJudge ${liveContestMap["BLZ-09L"].name}`,
-    statusText: "LIVE",
-    duration: liveContestMap["BLZ-09L"].duration,
-    problems: [
-      { id: "A", title: "Digit Collapse", difficulty: "easy", points: 100 },
-      { id: "B", title: "Fast Matrix Walk", difficulty: "medium", points: 200 },
-      { id: "C", title: "Prime Window", difficulty: "hard", points: 300 },
-    ],
-  },
+  return data;
+}
 
-  "ALG-12L": {
-    id: "ALG-12L",
-    title: `QuickJudge ${liveContestMap["ALG-12L"].name}`,
-    statusText: "LIVE",
-    duration: liveContestMap["ALG-12L"].duration,
-    problems: [
-      { id: "A", title: "Prefix Peak", difficulty: "easy", points: 100 },
-      {
-        id: "B",
-        title: "Binary Search Bounds",
-        difficulty: "medium",
-        points: 200,
-      },
-      { id: "C", title: "Ad-hoc Conveyor", difficulty: "medium", points: 200 },
-      { id: "D", title: "Range Balance", difficulty: "hard", points: 300 },
-      { id: "E", title: "Compressed Jumps", difficulty: "hard", points: 300 },
-    ],
-  },
-};
-
-export async function getContestsApi() {
-  await wait(400);
+function getAuthHeaders() {
+  const token = localStorage.getItem("qj_token");
 
   return {
-    filters: clone(contestFilters),
-    live: clone(liveContests),
-    upcoming: clone(upcomingContests),
-    past: clone(pastContests),
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
   };
+}
+
+export async function getContestsApi() {
+  const response = await fetch(`${API_URL}/api/contests`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  return parseResponse(response);
 }
 
 export async function registerUpcomingContestApi(contestId) {
-  await wait(250);
+  const response = await fetch(
+    `${API_URL}/api/contests/${contestId}/register`,
+    {
+      method: "POST",
+      headers: getAuthHeaders(),
+    },
+  );
 
-  const contest = upcomingContests.find((item) => item.id === contestId);
-
-  if (!contest) {
-    throw new Error("Upcoming contest not found.");
-  }
-
-  return {
-    success: true,
-    contestId,
-  };
+  return parseResponse(response);
 }
 
 export async function verifyContestPasswordApi({ contestId, password }) {
-  await wait(300);
+  const response = await fetch(
+    `${API_URL}/api/contests/${contestId}/verify-password`,
+    {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ password }),
+    },
+  );
 
-  const contest = liveContests.find((item) => item.id === contestId);
-
-  if (!contest) {
-    throw new Error("Contest not found.");
-  }
-
-  if (!contest.requiresPassword) {
-    return {
-      success: true,
-      contestId,
-    };
-  }
-
-  if (password.trim() !== contest.password) {
-    throw new Error("Incorrect contest password.");
-  }
-
-  return {
-    success: true,
-    contestId,
-  };
+  return parseResponse(response);
 }
 
 export async function getContestDetailsApi(contestId) {
-  await wait(300);
+  const response = await fetch(`${API_URL}/api/contests/${contestId}`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
 
-  const details = contestDetailsMap[contestId];
-
-  if (!details) {
-    throw new Error("Contest not found.");
-  }
-
-  return clone(details);
+  return parseResponse(response);
 }
-
-//

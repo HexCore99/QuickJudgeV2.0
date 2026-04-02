@@ -1,20 +1,21 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { CalendarDays, Clock3 } from "lucide-react";
-import StudentTopTabs from "../../components/layout/StudentTopTabs";
-import ContestPageHeader from "../../components/contest/ContestPageHeader";
-import ContestFilterBar from "../../components/contest/ContestFilterBar";
-import ContestSection from "../../components/contest/ContestSection";
-import PastContestTable from "../../components/contest/PastContestTable";
-import ContestPasswordModal from "../../components/contest/ContestPasswordModal";
+import { CalendarDays, Clock3, Flag } from "lucide-react";
+import AppSearchInput from "../../../components/common/AppSearchInput";
+import StudentTopTabs from "../../../components/layout/StudentTopTabs";
+import ContestFilterBar from "../../../features/contests/components/ContestFilterBar";
+import ContestPasswordModal from "../../../features/contests/components/ContestPasswordModal";
+import ContestSection from "../../../features/contests/components/ContestSection";
+import PastContestTable from "../../../features/contests/components/PastContestTable";
 import {
   clearContestPasswordError,
   closeContestPasswordModal,
   openContestPasswordModal,
   setContestPasswordInput,
-} from "../../features/contests/contestSlice";
+} from "../../../features/contests/contestsSlice";
 import {
+  selectContestFilters,
   selectContestPasswordModal,
   selectContestsError,
   selectContestsHasFetched,
@@ -22,18 +23,48 @@ import {
   selectLiveContests,
   selectPastContests,
   selectSortedUpcomingContests,
-} from "../../features/contests/contestsSelectors";
+} from "../../../features/contests/contestsSelectors";
 import {
   fetchContests,
   registerUpcomingContest,
   verifyContestPassword,
-} from "../../features/contests/contestsThunks";
-import { contestFilters } from "../../features/contests/contestsMockData";
+} from "../../../features/contests/contestsThunks";
+
+function ContestPageHero({ search, setSearch }) {
+  return (
+    <section className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+      <div className="pt-1">
+        <div className="flex items-start gap-3">
+          <div className="mt-1 flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-200/90 bg-amber-50/70 text-amber-700 shadow-sm">
+            <Flag className="h-4.5 w-4.5" />
+          </div>
+
+          <div>
+            <h1 className="text-[48px] leading-none font-bold tracking-[-0.04em] text-slate-800 md:text-[56px]">
+              Contests
+            </h1>
+            <p className="mt-1.5 text-[14px] font-medium tracking-[0.01em] text-slate-500 md:text-[15px]">
+              Join and participate in programming contests
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <AppSearchInput
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+        placeholder="Search contests by name, topic, or tag..."
+        containerClassName="w-full max-w-md lg:mt-2"
+      />
+    </section>
+  );
+}
 
 function ContestPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
+  const contestFilters = useSelector(selectContestFilters);
   const liveContests = useSelector(selectLiveContests);
   const upcomingContests = useSelector(selectSortedUpcomingContests);
   const pastContests = useSelector(selectPastContests);
@@ -62,9 +93,7 @@ function ContestPage() {
   };
 
   const filteredLive = liveContests.filter(searchMatch);
-
   const filteredUpcoming = upcomingContests.filter(searchMatch);
-
   const filteredPast = pastContests.filter((contest) => {
     const matchesRated =
       pastFilter === "all" ||
@@ -88,7 +117,6 @@ function ContestPage() {
       return;
     }
 
-    // navigate(`/student/contests/${contest.id}`);
     navigate(`/student/${contest.id}/problems`);
   };
 
@@ -107,7 +135,7 @@ function ContestPage() {
 
       navigate(`/student/${passwordModal.contest.id}/problems`);
     } catch {
-      // error is already stored in redux state
+      //
     }
   };
 
@@ -116,13 +144,7 @@ function ContestPage() {
       <StudentTopTabs activeTab="Contests" logoTo="/" />
 
       <main className="mx-auto max-w-7xl px-6 py-8">
-        <ContestPageHeader
-          title="Contests"
-          subtitle="Join and participate in programming contests"
-          search={search}
-          setSearch={setSearch}
-          searchPlaceholder="Search contests by name, topic, or tag..."
-        />
+        <ContestPageHero search={search} setSearch={setSearch} />
 
         <ContestFilterBar
           filters={contestFilters}

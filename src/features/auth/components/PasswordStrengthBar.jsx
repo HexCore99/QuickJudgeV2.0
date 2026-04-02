@@ -39,7 +39,7 @@ function computeStrength(password) {
   const pwd = password || "";
   if (!pwd) {
     return {
-      label: "—",
+      label: "-",
       percent: 0,
       barClass: "bg-slate-400",
       textClass: "text-slate-700",
@@ -79,7 +79,8 @@ function computeStrength(password) {
   ];
 
   const chosen =
-    [...variants].reverse().find((v) => score >= v.min) || variants[0];
+    [...variants].reverse().find((variant) => score >= variant.min) ||
+    variants[0];
 
   return {
     label: chosen.label,

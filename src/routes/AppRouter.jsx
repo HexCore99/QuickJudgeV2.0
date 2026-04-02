@@ -4,9 +4,14 @@ import LandingPage from "../pages/public/LandingPage";
 import LoginPage from "../pages/public/LoginPage";
 import SignupPage from "../pages/public/SignupPage";
 import StudentLayout from "../components/layout/StudentLayout";
-import ContestPage from "../pages/student/ContestPage";
-import ContestDetailsPage from "../pages/student/ContestDetailsPage";
-import PastContestsPage from "../pages/student/PastContestsPage";
+import ContestAnnouncementsPage from "../pages/student/contests/ContestAnnouncementsPage";
+import ContestLayoutPage from "../pages/student/contests/ContestLayoutPage";
+import ContestLeaderboardPage from "../pages/student/contests/ContestLeaderboardPage";
+import ContestPage from "../pages/student/contests/ContestPage";
+import ContestProblemsPage from "../pages/student/contests/ContestProblemsPage";
+import ContestQueriesPage from "../pages/student/contests/ContestQueriesPage";
+import ContestSubmissionsPage from "../pages/student/contests/ContestSubmissionsPage";
+import PastContestsPage from "../pages/student/contests/PastContestsPage";
 
 const router = createBrowserRouter([
   {
@@ -21,13 +26,18 @@ const router = createBrowserRouter([
     children: [
       { path: "contests", element: <ContestPage /> },
       { path: "contests/past", element: <PastContestsPage /> },
-
-      { path: ":contestId", element: <Navigate to="problems" replace /> },
-      { path: ":contestId/problems", element: <ContestDetailsPage /> },
-      { path: ":contestId/submissions", element: <ContestDetailsPage /> },
-      { path: ":contestId/leaderboard", element: <ContestDetailsPage /> },
-      { path: ":contestId/announcements", element: <ContestDetailsPage /> },
-      { path: ":contestId/queries", element: <ContestDetailsPage /> },
+      {
+        path: ":contestId",
+        element: <ContestLayoutPage />,
+        children: [
+          { index: true, element: <Navigate to="problems" replace /> },
+          { path: "problems", element: <ContestProblemsPage /> },
+          { path: "submissions", element: <ContestSubmissionsPage /> },
+          { path: "leaderboard", element: <ContestLeaderboardPage /> },
+          { path: "announcements", element: <ContestAnnouncementsPage /> },
+          { path: "queries", element: <ContestQueriesPage /> },
+        ],
+      },
     ],
   },
 ]);

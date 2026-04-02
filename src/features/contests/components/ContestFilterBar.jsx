@@ -1,5 +1,5 @@
 import { CalendarDays, Clock3, History, Layers3 } from "lucide-react";
-import Button from "../common/Button";
+import Button from "../../../components/common/Button";
 
 const iconMap = {
   all: Layers3,
@@ -9,7 +9,7 @@ const iconMap = {
 };
 
 function ContestFilterBar({
-  filters,
+  filters = [],
   activeFilter,
   setActiveFilter,
   setPastFilter,
@@ -29,6 +29,7 @@ function ContestFilterBar({
               if (key !== "past") setPastFilter("all");
             }}
           >
+            {Icon ? <Icon className="h-4 w-4" /> : null}
             <span>{label}</span>
           </Button>
         );

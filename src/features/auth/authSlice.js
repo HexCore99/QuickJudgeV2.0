@@ -1,10 +1,13 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { loginUser, signupUser } from "./authThunks";
 
+const savedUser = localStorage.getItem("qj_user");
+const savedToken = localStorage.getItem("qj_token");
+
 const initialState = {
-  user: null,
-  token: null,
-  isAuthenticated: false,
+  user: savedUser ? JSON.parse(savedUser) : null,
+  token: savedToken || null,
+  isAuthenticated: Boolean(savedToken),
   isLoading: false,
   error: null,
 };
@@ -18,14 +21,19 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.isLoading = false;
+      state.error = null;
+
+      localStorage.removeItem("qj_user");
+      localStorage.removeItem("qj_token");
     },
+
     clearAuthError(state) {
       state.error = null;
     },
   },
+
   extraReducers: (builder) => {
     builder
-      // Login stuff
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -41,7 +49,7 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.error = action.payload || "Login failed";
       })
-      //  Signuuup
+
       .addCase(signupUser.pending, (state) => {
         state.isLoading = true;
         state.error = null;
@@ -55,7 +63,7 @@ const authSlice = createSlice({
       })
       .addCase(signupUser.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || "Singup failed";
+        state.error = action.payload || "Signup failed";
       });
   },
 });

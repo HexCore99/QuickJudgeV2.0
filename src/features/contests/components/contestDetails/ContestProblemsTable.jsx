@@ -1,6 +1,6 @@
-import ProblemStatusDot from "../../problems/ProblemStatusDot.jsx";
-import ProblemTitleLink from "../../problems/ProblemTitleLink.jsx";
-import ProblemDifficultyBadge from "../../problems/ProblemDifficultyBadge.jsx";
+import ProblemStatusDot from "../../../problems/components/ProblemStatusDot.jsx";
+import ProblemTitleLink from "../../../problems/components/ProblemTitleLink.jsx";
+import ProblemDifficultyBadge from "../../../problems/components/ProblemDifficultyBadge.jsx";
 
 function ContestProblemsTable({ problems }) {
   return (

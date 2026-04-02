@@ -5,12 +5,13 @@ export default function ContestDetailsHeader({ title, statusText, duration }) {
 
       <p className="mt-1 text-sm text-slate-500">
         <span>Status: {statusText}</span>
-        <span className="mx-2">•</span>
+        <span className="mx-2">|</span>
         <span>Duration: {duration}</span>
       </p>
     </div>
   );
 }
+
 /*
 TODOS:
 - Blinking Status

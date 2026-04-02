@@ -1,7 +1,6 @@
 import { Lock, X } from "lucide-react";
-import Button from "../common/Button";
-import AppTextInput from "../common/AppTextInput";
-import Error from "../common/Error";
+import Button from "../../../components/common/Button";
+import AppTextInput from "../../../components/common/AppTextInput";
 
 function ContestPasswordModal({
   isOpen,
@@ -9,6 +8,7 @@ function ContestPasswordModal({
   passwordInput,
   setPasswordInput,
   error,
+  isSubmitting = false,
   onClose,
   onSubmit,
 }) {
@@ -33,6 +33,7 @@ function ContestPasswordModal({
           </div>
 
           <button
+            type="button"
             onClick={onClose}
             className="rounded-lg p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
           >
@@ -64,9 +65,10 @@ function ContestPasswordModal({
 
             <Button
               type="submit"
+              disabled={isSubmitting}
               className="rounded-xl bg-emerald-600 hover:bg-emerald-700"
             >
-              Enter Contest
+              {isSubmitting ? "Checking..." : "Enter Contest"}
             </Button>
           </div>
         </form>

@@ -1,6 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "../features/auth/authSlice";
-import contestsReducer from "../features/contests/contestSlice";
+import contestsReducer from "../features/contests/contestsSlice";
 // Temporary reducer so Provider can be wired before real slices are added.
 const placeholderReducer = (state = {}) => state;
 

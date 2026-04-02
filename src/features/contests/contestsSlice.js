@@ -30,7 +30,7 @@ const initialState = {
   },
 };
 
-const contestSlice = createSlice({
+const contestsSlice = createSlice({
   name: "contests",
   initialState,
   reducers: {
@@ -138,8 +138,6 @@ export const {
   setContestPasswordInput,
   clearContestPasswordError,
   clearContestDetails,
-} = contestSlice.actions;
+} = contestsSlice.actions;
 
-export default contestSlice.reducer;
-
-//
+export default contestsSlice.reducer;

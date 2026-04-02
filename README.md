@@ -1,167 +1,152 @@
-
-
 # QuickJudge V2.0
 
-QuickJudge V2.0 is a frontend application built with Vite, React, Redux Toolkit, React Router, and Tailwind CSS v4.
+QuickJudge V2.0 is a full-stack coding contest app built with a React frontend and an Express + MySQL backend. The current app includes auth, protected contest APIs, contest browsing, contest details, password-protected live contests, and seed data for demoing the student contest flow.
 
+## Tech Stack
+
+- Frontend: Vite, React 19, Redux Toolkit, React Router DOM, Tailwind CSS v4
+- Backend: Express 5, MySQL, JWT, bcrypt
+- Tooling: ESLint, Prettier
 
 ## Prerequisites
 
-Install the following before running the project:
-
 - Node.js `^20.19.0 || >=22.12.0`
 - npm
+- MySQL
 
-This repo already includes a `package-lock.json`, so the default and recommended package manager is `npm`.
 
 ## Installation
 
-Clone the repository, then install dependencies:
+Install frontend dependencies from the project root:
 
 ```bash
 npm install
 ```
 
-If you are using Windows PowerShell and `npm` is blocked by execution policy, run the command with:
+Install backend dependencies:
 
 ```bash
-npm.cmd install
+cd backend
+npm install
 ```
 
-## Running the Project
+## Backend Environment
 
-Start the development server:
+Create or update [backend/.env](E:/ProG/QuickJudge/QuickJudgeV2.0/backend/.env) with values like these:
+
+```env
+PORT=5000
+DB_HOST=localhost
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=""
+DB_NAME=quickjudge
+JWT_SECRET=change_this_secret
+FRONTEND_URL=http://localhost:5173
+```
+
+## Database and Seed Data
+
+Open `XAMPP` Go to phpMyAdmin and import `quickjudge.sql` from `QuickJudgeV2.0/Database/quickjudge.sql`.
+
+
+## Running the App
+
+Start the backend in one terminal:
+
+```bash
+cd backend
+npm run dev
+```
+
+Start the frontend in another terminal from the project root:
 
 ```bash
 npm run dev
 ```
 
-### Admin Demo
+Default local URLs:
 
-- Email: `admin@quickjudge.dev`
-- Password: `123456`
+- Frontend: `http://localhost:5173`
+- Backend: `http://localhost:5000`
 
-Note: the admin login exists in the mock auth flow, but the admin route is not currently configured in `src/routes/AppRouter.jsx`.
-
-## Project Structure
+## Frontend Structure
 
 ```text
-QuickJudgeV2.0/
-├── backend/
-│   ├── package-lock.json
-│   ├── package.json
-│   └── src/
-│       ├── config/
-│       │   └── db.js
-│       ├── controllers/
-│       │   └── auth.controller.js
-│       ├── routes/
-│       │   └── auth.routes.js
-│       └── server.js
-├── public/
-│   └── vite.svg
-├── src/
-│   ├── app/
-│   │   └── store.js
-│   ├── assets/
-│   │   └── react.svg
-│   ├── components/
-│   │   ├── admin/
-│   │   ├── auth/
-│   │   │   ├── AuthCard.jsx
-│   │   │   ├── AuthHeader.jsx
-│   │   │   ├── AuthInput.jsx
-│   │   │   ├── AuthShell.jsx
-│   │   │   ├── DemoAccess.jsx
-│   │   │   └── PasswordStrengthBar.jsx
-│   │   ├── common/
-│   │   │   ├── AppSearchInput.jsx
-│   │   │   ├── AppTextInput.jsx
-│   │   │   ├── Button.jsx
-│   │   │   ├── Error.jsx
-│   │   │   ├── Info.jsx
-│   │   │   ├── Loading.jsx
-│   │   │   └── TagChip.jsx
-│   │   ├── contest/
-│   │   │   ├── contestDetails/
-│   │   │   │   ├── ContestDetailsHeader.jsx
-│   │   │   │   ├── ContestProblemsTable.jsx
-│   │   │   │   └── ContestTabs.jsx
-│   │   │   ├── ContestFilterBar.jsx
-│   │   │   ├── ContestListCard.jsx
-│   │   │   ├── ContestPageHeader.jsx
-│   │   │   ├── ContestPasswordModal.jsx
-│   │   │   ├── ContestSection.jsx
-│   │   │   ├── ContestSectionTitle.jsx
-│   │   │   ├── PastContestRow.jsx
-│   │   │   └── PastContestTable.jsx
-│   │   ├── landings/
-│   │   │   ├── CTASection.jsx
-│   │   │   ├── EdicationSection.jsx
-│   │   │   ├── FeatureCard.jsx
-│   │   │   ├── FeatureSection.jsx
-│   │   │   └── HeroSection.jsx
-│   │   ├── layout/
-│   │   │   ├── Footer.jsx
-│   │   │   ├── Navbar.jsx
-│   │   │   ├── PublicLayout.jsx
-│   │   │   ├── StudentLayout.jsx
-│   │   │   ├── StudentSidebar.jsx
-│   │   │   └── StudentTopTabs.jsx
-│   │   └── problems/
-│   │       ├── ProblemDifficultyBadge.jsx
-│   │       ├── ProblemStatusDot.jsx
-│   │       └── ProblemTitleLink.jsx
-│   ├── features/
-│   │   ├── auth/
-│   │   │   ├── authApi.js
-│   │   │   ├── authSelectors.js
-│   │   │   ├── authSlice.js
-│   │   │   └── authThunks.js
-│   │   └── contests/
-│   │       ├── contestSlice.js
-│   │       ├── contestsApi.js
-│   │       ├── contestsMockData.js
-│   │       ├── contestsSelectors.js
-│   │       └── contestsThunks.js
-│   ├── pages/
-│   │   ├── public/
-│   │   │   ├── LandingPage.jsx
-│   │   │   ├── LoginPage.jsx
-│   │   │   └── SignupPage.jsx
-│   │   └── student/
-│   │       ├── ContestDetailsPage.jsx
-│   │       ├── ContestPage.jsx
-│   │       └── PastContestsPage.jsx
-│   ├── routes/
-│   │   └── AppRouter.jsx
-│   ├── styles/
-│   │   └── index.css
-│   ├── App.jsx
-│   └── main.jsx
-├── .gitignore
-├── eslint.config.js
-├── index.html
-├── package-lock.json
-├── package.json
-├── prettier.config.js
-├── README.md
-├── vite.config.js
+src/
+|-- app/
+|   `-- store.js
+|-- components/
+|   |-- common/
+|   `-- layout/
+|-- features/
+|   |-- auth/
+|   |   |-- components/
+|   |   |-- authApi.js
+|   |   |-- authSelectors.js
+|   |   |-- authSlice.js
+|   |   `-- authThunks.js
+|   |-- contests/
+|   |   |-- components/
+|   |   |   |-- contestDetails/
+|   |   |   |-- ContestFilterBar.jsx
+|   |   |   |-- ContestListCard.jsx
+|   |   |   |-- ContestPasswordModal.jsx
+|   |   |   |-- ContestSection.jsx
+|   |   |   |-- ContestSectionTitle.jsx
+|   |   |   |-- PastContestRow.jsx
+|   |   |   `-- PastContestTable.jsx
+|   |   |-- contestsApi.js
+|   |   |-- contestsSelectors.js
+|   |   |-- contestsSlice.js
+|   |   `-- contestsThunks.js
+|   `-- problems/
+|       `-- components/
+|           |-- ProblemDifficultyBadge.jsx
+|           |-- ProblemStatusDot.jsx
+|           `-- ProblemTitleLink.jsx
+|-- pages/
+|   |-- public/
+|   |   |-- LandingPage.jsx
+|   |   |-- LoginPage.jsx
+|   |   `-- SignupPage.jsx
+|   `-- student/
+|       `-- contests/
+|           |-- ContestAnnouncementsPage.jsx
+|           |-- ContestLayoutPage.jsx
+|           |-- ContestLeaderboardPage.jsx
+|           |-- ContestPage.jsx
+|           |-- ContestProblemsPage.jsx
+|           |-- ContestQueriesPage.jsx
+|           |-- ContestSubmissionsPage.jsx
+|           `-- PastContestsPage.jsx
+|-- routes/
+|   `-- AppRouter.jsx
+|-- styles/
+|   `-- index.css
+|-- App.jsx
+`-- main.jsx
 ```
 
-## Tech Stack
+## Backend Structure
 
-- Vite 7
-- React 19
-- Redux Toolkit
-- React Router DOM
-- Tailwind CSS v4
-- ESLint
-- Prettier
-
-## Notes
-
-- No backend setup is required for the current version.
-- No environment variables are required for the current version.
-- Authentication and contest content are mocked for UI development.
-- The app is still in progress and is being aligned with the intended larger QuickJudge structure.
+```text
+backend/src/
+|-- config/
+|   `-- db.js
+|-- controllers/
+|   |-- auth.controller.js
+|   `-- contest.controller.js
+|-- middleware/
+|   `-- auth.middleware.js
+|-- routes/
+|   |-- auth.routes.js
+|   `-- contest.routes.js
+|-- services/
+|   `-- contest.service.js
+|-- utils/
+|   `-- response.js
+|-- validators/
+|   `-- contest.validator.js
+`-- server.js
+```

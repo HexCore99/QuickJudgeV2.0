@@ -8,8 +8,8 @@ import {
   Lock,
   Users,
 } from "lucide-react";
-import Info from "../common/Info";
-import TagChip from "../common/TagChip";
+import Info from "../../../components/common/Info";
+import TagChip from "../../../components/common/TagChip";
 
 function ContestListCard({
   contest,
