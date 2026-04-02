@@ -140,16 +140,12 @@ QuickJudgeV2.0/
 │   ├── App.jsx
 │   └── main.jsx
 ├── .gitignore
-├── copy_files_gui.py
 ├── eslint.config.js
 ├── index.html
 ├── package-lock.json
 ├── package.json
 ├── prettier.config.js
-├── problemThatCouldAppearLater.txt
-├── quickjudge_component_structure.txt
 ├── README.md
-├── Todo.md
 ├── vite.config.js
 ```
 
