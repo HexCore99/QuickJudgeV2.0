@@ -34,7 +34,7 @@ export async function getContestDetails(req, res) {
       return errorResponse(res, 400, validationError);
     }
 
-    const data = await getContestDetailsById(contestId);
+    const data = await getContestDetailsById(req.user.id, contestId);
 
     return successResponse(
       res,
@@ -90,6 +90,7 @@ export async function verifyContestPassword(req, res) {
     }
 
     const data = await verifyContestPasswordAccess(
+      req.user.id,
       contestId,
       req.body.password,
     );

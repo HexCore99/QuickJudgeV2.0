@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { History } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import AppSearchInput from "../../../components/common/AppSearchInput";
@@ -68,16 +68,14 @@ function PastContestsPage() {
     return haystack.includes(query);
   };
 
-  const filteredPast = useMemo(() => {
-    return pastContests.filter((contest) => {
-      const matchesRated =
-        pastFilter === "all" ||
-        (pastFilter === "rated" && contest.rated) ||
-        (pastFilter === "unrated" && !contest.rated);
+  const filteredPast = pastContests.filter((contest) => {
+    const matchesRated =
+      pastFilter === "all" ||
+      (pastFilter === "rated" && contest.rated) ||
+      (pastFilter === "unrated" && !contest.rated);
 
-      return matchesRated && searchMatch(contest);
-    });
-  }, [pastContests, pastFilter, query]);
+    return matchesRated && searchMatch(contest);
+  });
 
   return (
     <div className="min-h-screen bg-white text-slate-900">

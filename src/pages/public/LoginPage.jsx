@@ -5,7 +5,6 @@ import AuthShell from "../../features/auth/components/AuthShell";
 import AuthCard from "../../features/auth/components/AuthCard";
 import AuthHeader from "../../features/auth/components/AuthHeader";
 import AuthInput from "../../features/auth/components/AuthInput";
-import DemoAccess from "../../features/auth/components/DemoAccess";
 
 import { loginUser } from "../../features/auth/authThunks";
 import { clearAuthError } from "../../features/auth/authSlice";
@@ -51,27 +50,6 @@ function LoginPage() {
   function handleSubmit(e) {
     e.preventDefault();
     dispatch(loginUser(formData));
-  }
-  function handleStudentDemo() {
-    //:Bypassed login demo
-    navigate("/student/contests");
-    return;
-    // dispatch(
-    //   loginUser({
-    //     email: "student@quickjudge.dev",
-    //     password: "123456",
-    //   }),
-    // );
-  }
-  function handleAdminDemo() {
-    navigate("/student/admin");
-
-    // dispatch(
-    //   loginUser({
-    //     email: "admin@quickjudge.dev",
-    //     password: "123456",
-    //   }),
-    // );
   }
   return (
     <div>
@@ -124,12 +102,6 @@ function LoginPage() {
             </Link>
           </p>
         </AuthCard>
-
-        <DemoAccess
-          onStudentDemo={handleStudentDemo}
-          onAdminDemo={handleAdminDemo}
-          disabled={isLoading}
-        />
       </AuthShell>
     </div>
   );

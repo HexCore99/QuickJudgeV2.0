@@ -68,6 +68,18 @@ async function getTagsMap(contestIds) {
   }, {});
 }
 
+async function hasContestAccess(userId, contestId) {
+  const [rows] = await pool.execute(
+    `SELECT 1
+     FROM contest_access
+     WHERE user_id = ? AND contest_id = ?
+     LIMIT 1`,
+    [userId, contestId],
+  );
+
+  return rows.length > 0;
+}
+
 export async function getContestsForUser(userId) {
   const [liveRows] = await pool.execute(
     `SELECT
@@ -172,13 +184,14 @@ export async function getContestsForUser(userId) {
   };
 }
 
-export async function getContestDetailsById(contestId) {
+export async function getContestDetailsById(userId, contestId) {
   const [contestRows] = await pool.execute(
     `SELECT
        id,
        name,
        status,
-       duration_minutes
+       duration_minutes,
+       requires_password
      FROM contests
      WHERE id = ?
      LIMIT 1`,
@@ -190,6 +203,13 @@ export async function getContestDetailsById(contestId) {
   }
 
   const contest = contestRows[0];
+
+  if (
+    contest.requires_password &&
+    !(await hasContestAccess(userId, contestId))
+  ) {
+    throw createServiceError("Contest password required.", 403);
+  }
 
   const [problemRows] = await pool.execute(
     `SELECT
@@ -248,7 +268,7 @@ export async function registerUserForUpcomingContest(userId, contestId) {
   };
 }
 
-export async function verifyContestPasswordAccess(contestId, password) {
+export async function verifyContestPasswordAccess(userId, contestId, password) {
   const [contestRows] = await pool.execute(
     `SELECT id, requires_password, password_hash
      FROM contests
@@ -274,6 +294,13 @@ export async function verifyContestPasswordAccess(contestId, password) {
   if (!isMatched) {
     throw createServiceError("Incorrect contest password.", 401);
   }
+
+  await pool.execute(
+    `INSERT INTO contest_access (user_id, contest_id)
+     VALUES (?, ?)
+     ON DUPLICATE KEY UPDATE granted_at = CURRENT_TIMESTAMP`,
+    [userId, contestId],
+  );
 
   return {
     contestId,

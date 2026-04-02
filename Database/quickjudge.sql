@@ -17,6 +17,9 @@ SET time_zone = "+00:00";
 /*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
 /*!40101 SET NAMES utf8mb4 */;
 
+CREATE DATABASE IF NOT EXISTS `quickjudge`;
+USE `quickjudge`;
+
 --
 -- Database: `quickjudge`
 --
@@ -131,6 +134,19 @@ INSERT INTO `contest_problems` (`id`, `contest_id`, `problem_code`, `title`, `di
 (164, 'NC-03', 'C', 'Trie Merge', 'medium', 200, 3),
 (165, 'NC-03', 'D', 'Pattern Rush', 'hard', 300, 4),
 (166, 'NC-03', 'E', 'Lexicographic Night', 'hard', 300, 5);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `contest_access`
+--
+
+CREATE TABLE `contest_access` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `contest_id` varchar(30) NOT NULL,
+  `granted_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -276,6 +292,14 @@ ALTER TABLE `contest_problems`
   ADD KEY `contest_id` (`contest_id`);
 
 --
+-- Indexes for table `contest_access`
+--
+ALTER TABLE `contest_access`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_user_contest_access` (`user_id`,`contest_id`),
+  ADD KEY `contest_id` (`contest_id`);
+
+--
 -- Indexes for table `contest_registrations`
 --
 ALTER TABLE `contest_registrations`
@@ -316,6 +340,12 @@ ALTER TABLE `contest_problems`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=167;
 
 --
+-- AUTO_INCREMENT for table `contest_access`
+--
+ALTER TABLE `contest_access`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1;
+
+--
 -- AUTO_INCREMENT for table `contest_registrations`
 --
 ALTER TABLE `contest_registrations`
@@ -348,6 +378,13 @@ ALTER TABLE `users`
 --
 ALTER TABLE `contest_problems`
   ADD CONSTRAINT `contest_problems_ibfk_1` FOREIGN KEY (`contest_id`) REFERENCES `contests` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `contest_access`
+--
+ALTER TABLE `contest_access`
+  ADD CONSTRAINT `contest_access_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `contest_access_ibfk_2` FOREIGN KEY (`contest_id`) REFERENCES `contests` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `contest_registrations`
