@@ -1,4 +1,4 @@
-import { createBrowserRouter, Route } from "react-router-dom";
+import { Navigate, createBrowserRouter } from "react-router-dom";
 import PublicLayout from "../components/layout/PublicLayout";
 import LandingPage from "../pages/public/LandingPage";
 import LoginPage from "../pages/public/LoginPage";
@@ -20,9 +20,14 @@ const router = createBrowserRouter([
     element: <StudentLayout />,
     children: [
       { path: "contests", element: <ContestPage /> },
-      { path: "contests/:contestId", element: <ContestDetailsPage /> },
       { path: "contests/past", element: <PastContestsPage /> },
-      // { path: "contst/:contestId", element: <ContestDetailsPage /> },
+
+      { path: ":contestId", element: <Navigate to="problems" replace /> },
+      { path: ":contestId/problems", element: <ContestDetailsPage /> },
+      { path: ":contestId/submissions", element: <ContestDetailsPage /> },
+      { path: ":contestId/leaderboard", element: <ContestDetailsPage /> },
+      { path: ":contestId/announcements", element: <ContestDetailsPage /> },
+      { path: ":contestId/queries", element: <ContestDetailsPage /> },
     ],
   },
 ]);

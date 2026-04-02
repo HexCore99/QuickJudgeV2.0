@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 *.txt
 *.env
+xyz.html
+*.py

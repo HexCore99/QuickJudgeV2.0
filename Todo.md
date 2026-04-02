@@ -1,28 +1,34 @@
-## Favorite problems
+
+# Todo
+
+## Todo
+
+- [ ] Favorite problems
+- [ ] Handle notifications
+- [ ] Profile
+- [ ] Send a notification when a registered contest starts
+- [ ] Submission Page
+- [ ] Leaderboard Page
+- [ ] Announcements Page
+- [ ] Queries Page
+- [ ] 
+
+## Problem Rules
+
+- [ ] Outside contest:
+  - Add Editorial
 
 ## Coloring Problems
-```
-  - Solved           -> Green
-  - Participated     -> Yellow
-  - Not Paritcipated -> Usual
-  ```
 
-## Problem
-```
-  - outside contest
-      - A solution Section
-      - Editorial
-  - Submissions
-  ```
-  
-## Tabs should be Link
-## implement Enter Contest
-## Past Contest
-```
-- There should be 5 past contest in the contest page
-- Load More Link, at the right bottom.
-- Clicking <Load More> will redirect to the Past Contests Tab, where all the past contest will be listed
+- Solved: Green
+- Participated: Yellow
+- Not Participated: Default
 
-```
-## Upon Registering a contest, User will get notification when Contest Starts
-## Handle Notification Part
+## Done
+- [x] Contest Page
+- [x] Tabs should be links
+- [x] Implement Enter Contest
+- [x] Past Contest
+  - Show 5 past contests on the contest page
+  - Add a "Load More" link at the bottom-right
+  - Clicking `Load More` should redirect to the Past Contests tab

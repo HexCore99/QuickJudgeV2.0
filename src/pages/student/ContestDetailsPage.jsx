@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import StudentTopTabs from "../../components/layout/StudentTopTabs";
 import ContestDetailsHeader from "../../components/contest/contestDetails/ContestDetailsHeader";
 import ContestTabs from "../../components/contest/contestDetails/ContestTabs";
-import ContestProblemsTable from "../../components/contest/problems/ContestProblemsTable";
+import ContestProblemsTable from "../../components/contest/contestDetails/ContestProblemsTable";
 import Loading from "../../components/common/Loading";
 import Error from "../../components/common/Error";
 import { clearContestDetails } from "../../features/contests/contestSlice";
@@ -15,15 +15,24 @@ import {
 } from "../../features/contests/contestsSelectors";
 import { fetchContestDetails } from "../../features/contests/contestsThunks";
 
+function ComingSoonCard({ title }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-500">
+      {title} page will be added later.
+    </div>
+  );
+}
+
 function ContestDetailsPage() {
   const dispatch = useDispatch();
   const { contestId } = useParams();
+  const { pathname } = useLocation();
 
   const contestDetails = useSelector(selectContestDetails);
   const isLoading = useSelector(selectContestDetailsLoading);
   const error = useSelector(selectContestDetailsError);
 
-  const [activeTab, setActiveTab] = useState("Problems");
+  const currentSection = pathname.split("/").pop();
 
   useEffect(() => {
     dispatch(fetchContestDetails(contestId));
@@ -33,16 +42,6 @@ function ContestDetailsPage() {
     };
   }, [dispatch, contestId]);
 
-  useEffect(() => {
-    setActiveTab("Problems");
-  }, [contestId]);
-
-  const tabContent = useMemo(() => {
-    if (!contestDetails) return null;
-
-    return <ContestProblemsTable problems={contestDetails.problems || []} />;
-  }, [contestDetails]);
-
   if (isLoading) {
     return <Loading description="Loading contest details..." />;
   }
@@ -50,6 +49,32 @@ function ContestDetailsPage() {
   if (error) {
     return <Error error={error} />;
   }
+
+  const renderContent = () => {
+    switch (currentSection) {
+      case "problems":
+        return (
+          <ContestProblemsTable problems={contestDetails?.problems || []} />
+        );
+
+      case "submissions":
+        return <ComingSoonCard title="Submissions" />;
+
+      case "leaderboard":
+        return <ComingSoonCard title="Leaderboard" />;
+
+      case "announcements":
+        return <ComingSoonCard title="Announcements" />;
+
+      case "queries":
+        return <ComingSoonCard title="Queries" />;
+
+      default:
+        return (
+          <ContestProblemsTable problems={contestDetails?.problems || []} />
+        );
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900">
@@ -74,13 +99,8 @@ function ContestDetailsPage() {
             />
 
             <div className="p-6">
-              <ContestTabs
-                tabs={contestDetails.tabs || []}
-                activeTab={activeTab}
-                onChange={setActiveTab}
-              />
-
-              {tabContent}
+              <ContestTabs />
+              {renderContent()}
             </div>
           </div>
         ) : null}

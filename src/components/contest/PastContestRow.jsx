@@ -15,9 +15,10 @@ function getContestTypeClasses(type) {
 function PastContestRow({ contest }) {
   return (
     <Link
-      to={`/student/contests/${contest.id}`}
-      className="group grid gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-slate-50 md:grid-cols-[2.2fr_0.8fr_0.8fr_180px] md:items-center"
+      to={`/student/${contest.id}/problems`}
+      className="group grid gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-slate-50 md:grid-cols-[2.2fr_1.4fr_0.8fr_0.8fr] md:items-center"
     >
+      {/* contest*/}
       <div>
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <h4 className="text-sm font-semibold text-slate-900">
@@ -46,19 +47,21 @@ function PastContestRow({ contest }) {
 
           <span>{contest.date}</span>
         </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          {contest.tags.map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-slate-200"
-            >
-              #{tag}
-            </span>
-          ))}
-        </div>
       </div>
 
+      {/* tag*/}
+      <div className="flex flex-wrap gap-2">
+        {contest.tags.map((tag) => (
+          <span
+            key={tag}
+            className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-slate-200"
+          >
+            #{tag}
+          </span>
+        ))}
+      </div>
+
+      {/* rank*/}
       <div className="text-left md:text-center">
         <div className="font-mono text-sm font-bold text-slate-900">
           {contest.participated ? `#${contest.rank}` : "-"}
@@ -69,17 +72,12 @@ function PastContestRow({ contest }) {
         </div>
       </div>
 
+      {/* question*/}
       <div className="text-left md:text-center">
         <div className="font-mono text-sm font-bold text-slate-900">
           {contest.questions}
         </div>
         <div className="text-[11px] text-slate-500">questions</div>
-      </div>
-
-      <div className="md:text-right">
-        <span className="inline-flex rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 transition group-hover:bg-amber-50">
-          Open Contest
-        </span>
       </div>
     </Link>
   );

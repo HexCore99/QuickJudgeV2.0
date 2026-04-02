@@ -1,4 +1,7 @@
 import { Lock, X } from "lucide-react";
+import Button from "../common/Button";
+import AppTextInput from "../common/AppTextInput";
+import Error from "../common/Error";
 
 function ContestPasswordModal({
   isOpen,
@@ -43,12 +46,11 @@ function ContestPasswordModal({
             Enter password
           </label>
 
-          <input
+          <AppTextInput
             type="password"
             value={passwordInput}
             onChange={(e) => setPasswordInput(e.target.value)}
             placeholder="Contest password"
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm transition outline-none focus:border-amber-300 focus:ring-4 focus:ring-amber-100"
           />
 
           {error && (
@@ -56,20 +58,16 @@ function ContestPasswordModal({
           )}
 
           <div className="mt-4 flex items-center justify-end gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-            >
+            <Button type="button" variant="secondary" onClick={onClose}>
               Cancel
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="submit"
-              className="rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+              className="rounded-xl bg-emerald-600 hover:bg-emerald-700"
             >
               Enter Contest
-            </button>
+            </Button>
           </div>
         </form>
       </div>

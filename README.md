@@ -47,83 +47,110 @@ Note: the admin login exists in the mock auth flow, but the admin route is not c
 
 ```text
 QuickJudgeV2.0/
-|-- public/
-|   `-- vite.svg
-|-- src/
-|   |-- app/
-|   |   `-- store.js
-|   |-- assets/
-|   |   `-- react.svg
-|   |-- components/
-|   |   |-- auth/
-|   |   |   |-- AuthCard.jsx
-|   |   |   |-- AuthHeader.jsx
-|   |   |   |-- AuthInput.jsx
-|   |   |   |-- AuthShell.jsx
-|   |   |   `-- DemoAccess.jsx
-|   |   |-- common/
-|   |   |   |-- AppButton.jsx
-|   |   |   |-- AppTextInput.jsx
-|   |   |   |-- Error.jsx
-|   |   |   `-- Loading.jsx
-|   |   |-- contest/
-|   |   |   |-- contestDetails/
-|   |   |   |   |-- ContestDetailsHeader.jsx
-|   |   |   |   `-- ContestTabs.jsx
-|   |   |   |-- problems/
-|   |   |   |   `-- ContestProblemsTable.jsx
-|   |   |   |-- ContestListCard.jsx
-|   |   |   |-- ContestPageHeader.jsx
-|   |   |   |-- ContestPasswordModal.jsx
-|   |   |   `-- ContestSection.jsx
-|   |   |-- landings/
-|   |   |   |-- CTASection.jsx
-|   |   |   |-- EdicationSection.jsx
-|   |   |   |-- FeatureCard.jsx
-|   |   |   |-- FeatureSection.jsx
-|   |   |   `-- HeroSection.jsx
-|   |   |-- layout/
-|   |   |   |-- Footer.jsx
-|   |   |   |-- Navbar.jsx
-|   |   |   |-- PublicLayout.jsx
-|   |   |   |-- StudentLayout.jsx
-|   |   |   `-- StudentSidebar.jsx
-|   |   `-- problems/
-|   |       |-- ProblemDifficultyBadge.jsx
-|   |       |-- ProblemStatusDot.jsx
-|   |       `-- ProblemTitleLink.jsx
-|   |-- features/
-|   |   |-- auth/
-|   |   |   |-- authApi.js
-|   |   |   |-- authSelectors.js
-|   |   |   |-- authSlice.js
-|   |   |   `-- authThinks.js
-|   |   `-- contests/
-|   |       |-- contestSlice.js
-|   |       |-- contestsApi.js
-|   |       |-- contestsSelectors.js
-|   |       `-- contestsThunks.js
-|   |-- pages/
-|   |   |-- public/
-|   |   |   |-- LandingPage.jsx
-|   |   |   |-- LoginPage.jsx
-|   |   |   `-- SignupPage.jsx
-|   |   `-- student/
-|   |       |-- ContestDetailsPage.jsx
-|   |       `-- ContestPage.jsx
-|   |-- routes/
-|   |   `-- AppRouter.jsx
-|   |-- styles/
-|   |   `-- index.css
-|   |-- App.jsx
-|   `-- main.jsx
-|-- eslint.config.js
-|-- index.html
-|-- package-lock.json
-|-- package.json
-|-- prettier.config.js
-|-- README.md
-`-- vite.config.js
+├── backend/
+│   ├── package-lock.json
+│   ├── package.json
+│   └── src/
+│       ├── config/
+│       │   └── db.js
+│       ├── controllers/
+│       │   └── auth.controller.js
+│       ├── routes/
+│       │   └── auth.routes.js
+│       └── server.js
+├── public/
+│   └── vite.svg
+├── src/
+│   ├── app/
+│   │   └── store.js
+│   ├── assets/
+│   │   └── react.svg
+│   ├── components/
+│   │   ├── admin/
+│   │   ├── auth/
+│   │   │   ├── AuthCard.jsx
+│   │   │   ├── AuthHeader.jsx
+│   │   │   ├── AuthInput.jsx
+│   │   │   ├── AuthShell.jsx
+│   │   │   ├── DemoAccess.jsx
+│   │   │   └── PasswordStrengthBar.jsx
+│   │   ├── common/
+│   │   │   ├── AppSearchInput.jsx
+│   │   │   ├── AppTextInput.jsx
+│   │   │   ├── Button.jsx
+│   │   │   ├── Error.jsx
+│   │   │   ├── Info.jsx
+│   │   │   ├── Loading.jsx
+│   │   │   └── TagChip.jsx
+│   │   ├── contest/
+│   │   │   ├── contestDetails/
+│   │   │   │   ├── ContestDetailsHeader.jsx
+│   │   │   │   ├── ContestProblemsTable.jsx
+│   │   │   │   └── ContestTabs.jsx
+│   │   │   ├── ContestFilterBar.jsx
+│   │   │   ├── ContestListCard.jsx
+│   │   │   ├── ContestPageHeader.jsx
+│   │   │   ├── ContestPasswordModal.jsx
+│   │   │   ├── ContestSection.jsx
+│   │   │   ├── ContestSectionTitle.jsx
+│   │   │   ├── PastContestRow.jsx
+│   │   │   └── PastContestTable.jsx
+│   │   ├── landings/
+│   │   │   ├── CTASection.jsx
+│   │   │   ├── EdicationSection.jsx
+│   │   │   ├── FeatureCard.jsx
+│   │   │   ├── FeatureSection.jsx
+│   │   │   └── HeroSection.jsx
+│   │   ├── layout/
+│   │   │   ├── Footer.jsx
+│   │   │   ├── Navbar.jsx
+│   │   │   ├── PublicLayout.jsx
+│   │   │   ├── StudentLayout.jsx
+│   │   │   ├── StudentSidebar.jsx
+│   │   │   └── StudentTopTabs.jsx
+│   │   └── problems/
+│   │       ├── ProblemDifficultyBadge.jsx
+│   │       ├── ProblemStatusDot.jsx
+│   │       └── ProblemTitleLink.jsx
+│   ├── features/
+│   │   ├── auth/
+│   │   │   ├── authApi.js
+│   │   │   ├── authSelectors.js
+│   │   │   ├── authSlice.js
+│   │   │   └── authThunks.js
+│   │   └── contests/
+│   │       ├── contestSlice.js
+│   │       ├── contestsApi.js
+│   │       ├── contestsMockData.js
+│   │       ├── contestsSelectors.js
+│   │       └── contestsThunks.js
+│   ├── pages/
+│   │   ├── public/
+│   │   │   ├── LandingPage.jsx
+│   │   │   ├── LoginPage.jsx
+│   │   │   └── SignupPage.jsx
+│   │   └── student/
+│   │       ├── ContestDetailsPage.jsx
+│   │       ├── ContestPage.jsx
+│   │       └── PastContestsPage.jsx
+│   ├── routes/
+│   │   └── AppRouter.jsx
+│   ├── styles/
+│   │   └── index.css
+│   ├── App.jsx
+│   └── main.jsx
+├── .gitignore
+├── copy_files_gui.py
+├── eslint.config.js
+├── index.html
+├── package-lock.json
+├── package.json
+├── prettier.config.js
+├── problemThatCouldAppearLater.txt
+├── quickjudge_component_structure.txt
+├── README.md
+├── Todo.md
+├── vite.config.js
 ```
 
 ## Tech Stack

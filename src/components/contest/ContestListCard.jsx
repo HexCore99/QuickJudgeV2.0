@@ -8,23 +8,8 @@ import {
   Lock,
   Users,
 } from "lucide-react";
-
-function TagChip({ children }) {
-  return (
-    <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700 ring-1 ring-slate-200">
-      #{children}
-    </span>
-  );
-}
-
-function Info({ icon: Icon, children }) {
-  return (
-    <div className="flex items-center gap-1.5 text-xs text-slate-500">
-      <Icon className="h-3.5 w-3.5" />
-      <span>{children}</span>
-    </div>
-  );
-}
+import Info from "../common/Info";
+import TagChip from "../common/TagChip";
 
 function ContestListCard({
   contest,
@@ -57,11 +42,10 @@ function ContestListCard({
         }`}
       />
 
+      {/* card content*/}
       <div className="ml-3">
         <div className="mb-2 flex flex-wrap items-center gap-3">
-          <h3 className="text-base font-bold text-slate-900">
-            QuickJudge {contest.name}
-          </h3>
+          <h3 className="text-base font-bold text-slate-900">{contest.name}</h3>
 
           <span
             className={`inline-flex items-center gap-2 rounded-md px-2.5 py-1 text-[10px] font-bold tracking-[0.18em] uppercase ${

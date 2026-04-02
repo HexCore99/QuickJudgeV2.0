@@ -61,26 +61,18 @@ function ContestPage() {
     return haystack.includes(query);
   };
 
-  const filteredLive = useMemo(
-    () => liveContests.filter(searchMatch),
-    [liveContests, query],
-  );
+  const filteredLive = liveContests.filter(searchMatch);
 
-  const filteredUpcoming = useMemo(
-    () => upcomingContests.filter(searchMatch),
-    [upcomingContests, query],
-  );
+  const filteredUpcoming = upcomingContests.filter(searchMatch);
 
-  const filteredPast = useMemo(() => {
-    return pastContests.filter((contest) => {
-      const matchesRated =
-        pastFilter === "all" ||
-        (pastFilter === "rated" && contest.rated) ||
-        (pastFilter === "unrated" && !contest.rated);
+  const filteredPast = pastContests.filter((contest) => {
+    const matchesRated =
+      pastFilter === "all" ||
+      (pastFilter === "rated" && contest.rated) ||
+      (pastFilter === "unrated" && !contest.rated);
 
-      return matchesRated && searchMatch(contest);
-    });
-  }, [pastContests, pastFilter, query]);
+    return matchesRated && searchMatch(contest);
+  });
 
   const latestFivePastContests = filteredPast.slice(0, 5);
 
@@ -96,7 +88,8 @@ function ContestPage() {
       return;
     }
 
-    navigate(`/student/contests/${contest.id}`);
+    // navigate(`/student/contests/${contest.id}`);
+    navigate(`/student/${contest.id}/problems`);
   };
 
   const handlePasswordSubmit = async (e) => {
@@ -112,7 +105,7 @@ function ContestPage() {
         }),
       ).unwrap();
 
-      navigate(`/student/contests/${passwordModal.contest.id}`);
+      navigate(`/student/${passwordModal.contest.id}/problems`);
     } catch {
       // error is already stored in redux state
     }
