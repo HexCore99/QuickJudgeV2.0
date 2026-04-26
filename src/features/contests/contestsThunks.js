@@ -1,6 +1,7 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
   getContestDetailsApi,
+  getContestLeaderboardApi,
   getContestsApi,
   registerUpcomingContestApi,
   verifyContestPasswordApi,
@@ -57,4 +58,17 @@ export const fetchContestDetails = createAsyncThunk(
     }
   },
 );
-//
+
+export const fetchContestLeaderboard = createAsyncThunk(
+  "contests/fetchContestLeaderboard",
+  async (contestId, thunkAPI) => {
+    try {
+      return await getContestLeaderboardApi(contestId);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to fetch leaderboard.",
+      );
+    }
+  },
+);
+
