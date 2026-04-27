@@ -1,5 +1,6 @@
 import { Link, NavLink } from "react-router-dom";
 import { Bell, Zap } from "lucide-react";
+import ProfileDropdown from "../common/ProfileDropdown";
 
 const defaultTabs = [
   { key: "Problems", to: "/student/problems" },
@@ -8,7 +9,7 @@ const defaultTabs = [
   { key: "Discuss", to: "/student/discuss" },
 ];
 
-function StudentTopTabs({ tabs = defaultTabs, logoTo = "/" }) {
+function StudentTopTabs({ tabs = defaultTabs, logoTo = "/", extraActions = null, navExtra = null }) {
   return (
     <header className="sticky top-0 z-30 border-b border-[#e8e4dd] bg-white">
       <div className="h-2 w-full bg-[#e8d3bc]" />
@@ -35,6 +36,7 @@ function StudentTopTabs({ tabs = defaultTabs, logoTo = "/" }) {
             <NavLink
               key={tab.key}
               to={tab.to}
+              end={tab.end}
               className={({ isActive }) =>
                 `inline-flex items-center justify-center rounded-full px-4 py-2 text-[14px] font-medium tracking-tight transition ${
                   isActive
@@ -46,14 +48,16 @@ function StudentTopTabs({ tabs = defaultTabs, logoTo = "/" }) {
               {tab.key}
             </NavLink>
           ))}
+          {navExtra}
         </nav>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          {extraActions}
           <button className="text-slate-400 transition hover:text-slate-700">
             <Bell className="h-4 w-4" />
           </button>
 
-          <div className="h-10 w-10 rounded-full border-2 border-amber-500 bg-[radial-gradient(circle_at_35%_30%,#d6d3d1,#78716c_45%,#1f2937_100%)]" />
+          <ProfileDropdown />
         </div>
       </div>
     </header>
