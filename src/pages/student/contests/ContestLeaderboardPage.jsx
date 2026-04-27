@@ -82,7 +82,7 @@ function buildMockLeaderboard(problems) {
     .map((entry, idx) => ({ ...entry, rank: idx + 1 }));
 }
 
-/*End of temp */
+/*EndtempData */
 
 function LeaderboardStatsBar({ entries, problems }) {
   if (!entries?.length) return null;
@@ -124,3 +124,95 @@ function LeaderboardStatsBar({ entries, problems }) {
     </div>
   );
 }
+
+function ContestLeaderboardPage() {
+  const dispatch = useDispatch();
+  const { contestDetails, contestId } = useOutletContext();
+
+  const leaderboard = useSelector(selectLeaderboard);
+  const isLoading = useSelector(selectLeaderboardLoading);
+  const error = useSelector(selectLeaderboardError);
+
+  const problems = contestDetails?.problems ?? [];
+  const isLive = contestDetails?.statusText?.toLowerCase().includes("live");
+
+  useEffect(() => {
+    dispatch(fetchContestLeaderboard(contestId));
+  }, [dispatch, contestId]);
+
+  // temporredux
+  const entries =
+    leaderboard?.entries ??
+    (problems.length > 0 ? buildMockLeaderboard(problems) : []);
+
+  const lbProblems =
+    leaderboard?.problems ??
+    problems.map((p) => ({ code: p.problem_code ?? p.code ?? p.id, title: p.title, points: p.points }));
+
+  function handleRefresh() {
+    dispatch(fetchContestLeaderboard(contestId));
+  }
+
+  return (
+    <div className="space-y-4">
+      {/*header_row*/}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <BarChart3 size={16} className="text-amber-600" />
+          <span className="text-sm font-semibold text-slate-700">
+            Standings
+          </span>
+          {isLive && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+              Live
+            </span>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleRefresh}
+          disabled={isLoading}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+        >
+          <RefreshCw
+            size={12}
+            className={isLoading ? "animate-spin" : ""}
+          />
+          Refresh
+        </button>
+      </div>
+
+      {/*errorbanner*/}
+      {error && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
+          {error} — showing sample data below.
+        </div>
+      )}
+
+      {/*statsbar*/}
+      <LeaderboardStatsBar entries={entries} problems={lbProblems} />
+
+      {/*skeleton*/}
+      {isLoading && !entries.length ? (
+        <div className="space-y-2">
+          {[...Array(8)].map((_, i) => (
+            <div
+              key={i}
+              className="h-12 animate-pulse rounded-xl bg-slate-100"
+            />
+          ))}
+        </div>
+      ) : (
+        <ContestLeaderboardTable
+          entries={entries}
+          problems={lbProblems}
+          isLive={isLive}
+        />
+      )}
+    </div>
+  );
+}
+
+export default ContestLeaderboardPage;
