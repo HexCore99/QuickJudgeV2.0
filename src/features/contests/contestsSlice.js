@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchContestDetails,
+  fetchContestLeaderboard,
   fetchContests,
   registerUpcomingContest,
   verifyContestPassword,
@@ -24,6 +25,12 @@ const initialState = {
   },
 
   contestDetails: {
+    data: null,
+    isLoading: false,
+    error: null,
+  },
+  
+  leaderboard: {
     data: null,
     isLoading: false,
     error: null,
