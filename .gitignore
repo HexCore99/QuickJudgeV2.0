@@ -27,3 +27,9 @@ IGNORE
 *.env
 xyz.html
 *.py
+
+!backend_flask/**/*.py
+!backend_flask/requirements.txt
+backend_flask/**/__pycache__/
+backend_flask/**/*.pyc
+backend_flask/.venv/
