@@ -163,7 +163,7 @@ export default function Heatmap({ dataWeeks }) {
         {levelColors.map((cls, i) => (
           <div
             key={i}
-            className={`h-[11px] w-[11px] rounded-sm ${cls}`}
+            className={`h-2.75 w-2.75 rounded-sm ${cls}`}
           />
         ))}
         <span>More</span>

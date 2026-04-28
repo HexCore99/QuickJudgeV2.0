@@ -82,6 +82,7 @@ export default function SubmissionsPanel({
               className="grid grid-cols-12 items-center gap-2 rounded-xl px-4 py-3 transition-colors hover:bg-slate-50"
             >
               <div className="col-span-5">
+                {/* TODO: Make it Link Later */}
                 <button
                   className="block truncate text-left text-sm font-medium text-slate-800 transition-colors hover:text-amber-600 hover:underline hover:underline-offset-2"
                   onClick={() =>
@@ -93,9 +94,9 @@ export default function SubmissionsPanel({
                 >
                   {s.problem}
                 </button>
-                <div className="font-mono text-[10px] text-slate-400">
+                {/* <div className="font-mono text-[10px] text-slate-400">
                   {s.id}
-                </div>
+                </div> */}
               </div>
               <div className="col-span-2 text-center">
                 <button

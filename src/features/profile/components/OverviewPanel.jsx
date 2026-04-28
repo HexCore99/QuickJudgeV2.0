@@ -16,11 +16,8 @@ function generateHeatmapData() {
   const days = [];
   const current = new Date(start);
   while (current <= today) {
-    const dayOfWeek = current.getDay();
-    // Weight: more submissions on weekdays, fewer on weekends
-    const weekdayWeight = dayOfWeek === 0 || dayOfWeek === 6 ? 0.3 : 0.6;
     const raw = Math.random();
-    const val = raw < 0.3 ? 0 : Math.ceil(raw * weekdayWeight * 10);
+    const val = raw < 0.5 ? 0 : Math.ceil(raw  * 7);
 
     days.push({
       date: new Date(current),
@@ -41,7 +38,6 @@ function generateHeatmapData() {
 
 export default function OverviewPanel() {
 
-  // Generate heatmap data (memoized so it stays stable)
   const { weeks } = useMemo(() => generateHeatmapData(), []);
 
   // Total submissions this year

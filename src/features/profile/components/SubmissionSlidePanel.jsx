@@ -1,3 +1,4 @@
+import Editor from "@monaco-editor/react";
 import { X, Copy } from "lucide-react";
 
 const verdictLabels = {
@@ -21,6 +22,16 @@ const verdictBg = {
   re: "bg-red-600/5 text-red-700",
   ce: "bg-slate-500/8 text-slate-600",
 };
+
+const languageMap = {
+  "C++": "cpp",
+  Python: "python",
+  Java: "java",
+};
+
+function getEditorLanguage(lang) {
+  return languageMap[lang] || "plaintext";
+}
 
 export default function SubmissionSlidePanel({
   submission,
@@ -63,10 +74,12 @@ export default function SubmissionSlidePanel({
         onClick={onClose}
       />
 
-      {/* Panel */}
+      {/* Floating panel */}
       <div
-        className={`fixed top-0 right-0 bottom-0 z-[950] w-[560px] max-w-[95vw] overflow-y-auto border-l border-amber-600/20 bg-white shadow-2xl transition-transform duration-400 ${
-          isOpen ? "translate-x-0" : "translate-x-full"
+        className={`fixed top-1/2 left-1/2 z-[950] max-h-[calc(100vh-2rem)] w-[860px] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-y-auto rounded-2xl border border-amber-600/20 bg-white shadow-2xl transition-all duration-300 ${
+          isOpen
+            ? "-translate-y-1/2 scale-100 opacity-100"
+            : "pointer-events-none -translate-y-[45%] scale-95 opacity-0"
         }`}
         style={{
           transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
@@ -91,7 +104,7 @@ export default function SubmissionSlidePanel({
             <div className="mb-5">
               <div className="mb-1 flex items-center gap-3">
                 <span
-                  className={`rounded-md px-3.5 py-1.5 text-[13px] font-semibold font-mono tracking-wide ${
+                  className={`rounded-md px-3.5 py-1.5 font-mono text-[13px] font-semibold tracking-wide ${
                     verdictBg[s.verdict.toLowerCase()] || verdictBg.ce
                   }`}
                 >
@@ -104,7 +117,7 @@ export default function SubmissionSlidePanel({
               <h4 className="mt-3 text-xl font-bold text-slate-800">
                 {s.problem}
               </h4>
-              <p className="mt-1 font-mono text-xs text-slate-400">{s.id}</p>
+              {/* <p className="mt-1 font-mono text-xs text-slate-400">{s.id}</p> */}
             </div>
 
             {/* Detail rows */}
@@ -131,7 +144,7 @@ export default function SubmissionSlidePanel({
               <h5 className="mb-3 text-sm font-semibold text-slate-800">
                 Test Cases
               </h5>
-              <div className="whitespace-pre-wrap rounded-xl border border-black/7 bg-slate-50 p-4 font-mono text-xs leading-relaxed text-slate-500">
+              <div className="rounded-xl border border-black/7 bg-slate-50 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap text-slate-500">
                 {s.tc}
               </div>
             </div>
@@ -150,9 +163,25 @@ export default function SubmissionSlidePanel({
                   Copy
                 </button>
               </div>
-              <pre className="overflow-x-auto rounded-xl border border-white/6 bg-slate-800 p-5 font-mono text-xs leading-7 text-slate-300">
-                {s.code}
-              </pre>
+              <div className="overflow-hidden rounded-xl border border-white/6 bg-slate-800">
+                <Editor
+                  height="500px"
+                  language={getEditorLanguage(s.lang)}
+                  value={s.code}
+                  theme="vs-dark"
+                  options={{
+                    readOnly: true,
+                    domReadOnly: true,
+                    minimap: { enabled: false },
+                    scrollBeyondLastLine: false,
+                    fontSize: 13,
+                    fontFamily: "Consolas, 'Courier New', monospace",
+                    lineNumbers: "on",
+                    wordWrap: "off",
+                    automaticLayout: true,
+                  }}
+                />
+              </div>
             </div>
           </div>
         )}
