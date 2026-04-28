@@ -16,6 +16,7 @@ def get_connection():
     )
 
 
+# <with> automatically close the connection after use
 def fetch_all(query, params=None):
     with get_connection() as connection:
         with connection.cursor() as cursor:
