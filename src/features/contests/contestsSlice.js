@@ -1,6 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
   fetchContestDetails,
+  fetchContestLeaderboard,
   fetchContests,
   registerUpcomingContest,
   verifyContestPassword,
@@ -24,6 +25,12 @@ const initialState = {
   },
 
   contestDetails: {
+    data: null,
+    isLoading: false,
+    error: null,
+  },
+  
+  leaderboard: {
     data: null,
     isLoading: false,
     error: null,
@@ -128,6 +135,19 @@ const contestsSlice = createSlice({
         state.contestDetails.isLoading = false;
         state.contestDetails.error =
           action.payload || "Failed to fetch contest details.";
+      })
+
+      .addCase(fetchContestLeaderboard.pending, (state) => {
+        state.leaderboard.isLoading=true;
+        state.leaderboard.error=null;
+      })
+      .addCase(fetchContestLeaderboard.fulfilled, (state,action) => {
+        state.leaderboard.isLoading=false;
+        state.leaderboard.data=action.payload;
+      })
+      .addCase(fetchContestLeaderboard.rejected, (state,action) => {
+        state.leaderboard.isLoading=false;
+        state.leaderboard.error=action.payload || "Failed to fetch leaderbard."
       });
   },
 });
