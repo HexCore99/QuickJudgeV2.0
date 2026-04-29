@@ -1,7 +1,5 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react";
-import { ratingHistory } from "../../../features/profile/profileMockData";
+import { useMemo } from "react";
 import Heatmap from "./Heatmap";
-
 
 // Generate LeetCode-style heatmap data for past year
 function generateHeatmapData() {
@@ -17,7 +15,7 @@ function generateHeatmapData() {
   const current = new Date(start);
   while (current <= today) {
     const raw = Math.random();
-    const val = raw < 0.5 ? 0 : Math.ceil(raw  * 7);
+    const val = raw < 0.5 ? 0 : Math.ceil(raw * 7);
 
     days.push({
       date: new Date(current),
@@ -35,9 +33,7 @@ function generateHeatmapData() {
   return { weeks, days };
 }
 
-
 export default function OverviewPanel() {
-
   const { weeks } = useMemo(() => generateHeatmapData(), []);
 
   // Total submissions this year
@@ -47,7 +43,6 @@ export default function OverviewPanel() {
   );
   return (
     <div className="space-y-6">
-
       {/* LeetCode-style Activity Heatmap */}
       <section className="rounded-2xl border border-black/7 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
         <div className="mb-4 flex items-center justify-between">
@@ -55,10 +50,9 @@ export default function OverviewPanel() {
             {totalSubmissions} submissions in the past year
           </h2>
         </div>
-        
+
         <Heatmap dataWeeks={weeks} />
       </section>
     </div>
   );
 }
-

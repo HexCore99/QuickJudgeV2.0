@@ -18,9 +18,7 @@ export default function ProblemBreakdown({ difficulties }) {
 
   return (
     <div className="rounded-2xl border border-black/7 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-      <h2 className="mb-5 font-semibold text-slate-800">
-        Problem Breakdown
-      </h2>
+      <h2 className="mb-5 font-semibold text-slate-800">Problem Breakdown</h2>
       <div className="space-y-4">
         {difficulties.map((difficulty, index) => {
           const pct = Math.max(
