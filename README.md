@@ -1,38 +1,16 @@
 # QuickJudge V2.0
 
-QuickJudge V2.0 is a full-stack coding contest app built with a React frontend and an Express + MySQL backend. The current app includes auth, protected contest APIs, contest browsing, contest details, password-protected live contests, and seed data for demoing the student contest flow.
-
-## Tech Stack
-
-- Frontend: Vite, React 19, Redux Toolkit, React Router DOM, Tailwind CSS v4
-- Backend: Express 5, MySQL, JWT, bcrypt
-- Tooling: ESLint, Prettier
+QuickJudge V2.0 is a full-stack online judge and coding contest platform. It lets users solve programming problems, submit code, and manage contest workflows through a React/Vite frontend powered by a Flask and MySQL backend.
 
 ## Prerequisites
 
-- Node.js `^20.19.0 || >=22.12.0`
-- npm
-- MySQL
-
-
-## Installation
-
-Install frontend dependencies from the project root:
-
-```bash
-npm install
-```
-
-Install backend dependencies:
-
-```bash
-cd backend
-npm install
-```
+- Node.js and npm
+- Python 3
+- MySQL, such as through XAMPP
 
 ## Backend Environment
 
-Create or update [backend/.env](E:/ProG/QuickJudge/QuickJudgeV2.0/backend/.env) with values like these:
+The current backend environment file is [backend_flask/.env](E:/ProG/QuickJudge/QuickJudgeV2.0/backend_flask/.env):
 
 ```env
 PORT=5000
@@ -42,111 +20,50 @@ DB_USER=root
 DB_PASSWORD=""
 DB_NAME=quickjudge
 JWT_SECRET=change_this_secret
-FRONTEND_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:5180
 ```
 
-## Database and Seed Data
+## Database Setup
 
-Open `XAMPP` Go to phpMyAdmin and import `quickjudge.sql` from `QuickJudgeV2.0/Database/quickjudge.sql`.
+Open XAMPP, start MySQL, then go to phpMyAdmin and import:
 
+```text
+Database/quickjudgeV2.sql
+```
 
-## Running the App
+## Run the Backend
 
-Start the backend in one terminal:
+```txt
+Open XAMPP, start MySQL, then go to phpMyAdmin and import:
+```
+
+Open a terminal from the project root:
 
 ```bash
-cd backend
+cd backend_flask
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+python app.py
+```
+
+The backend runs at:
+
+```text
+http://localhost:5000
+```
+
+## Run the Frontend
+
+Open another terminal from the project root:
+
+```bash
+npm install
 npm run dev
 ```
 
-Start the frontend in another terminal from the project root:
-
-```bash
-npm run dev
-```
-
-Default local URLs:
-
-- Frontend: `http://localhost:5173`
-- Backend: `http://localhost:5000`
-
-## Frontend Structure
+The frontend runs at:
 
 ```text
-src/
-|-- app/
-|   `-- store.js
-|-- components/
-|   |-- common/
-|   `-- layout/
-|-- features/
-|   |-- auth/
-|   |   |-- components/
-|   |   |-- authApi.js
-|   |   |-- authSelectors.js
-|   |   |-- authSlice.js
-|   |   `-- authThunks.js
-|   |-- contests/
-|   |   |-- components/
-|   |   |   |-- contestDetails/
-|   |   |   |-- ContestFilterBar.jsx
-|   |   |   |-- ContestListCard.jsx
-|   |   |   |-- ContestPasswordModal.jsx
-|   |   |   |-- ContestSection.jsx
-|   |   |   |-- ContestSectionTitle.jsx
-|   |   |   |-- PastContestRow.jsx
-|   |   |   `-- PastContestTable.jsx
-|   |   |-- contestsApi.js
-|   |   |-- contestsSelectors.js
-|   |   |-- contestsSlice.js
-|   |   `-- contestsThunks.js
-|   `-- problems/
-|       `-- components/
-|           |-- ProblemDifficultyBadge.jsx
-|           |-- ProblemStatusDot.jsx
-|           `-- ProblemTitleLink.jsx
-|-- pages/
-|   |-- public/
-|   |   |-- LandingPage.jsx
-|   |   |-- LoginPage.jsx
-|   |   `-- SignupPage.jsx
-|   `-- student/
-|       `-- contests/
-|           |-- ContestAnnouncementsPage.jsx
-|           |-- ContestLayoutPage.jsx
-|           |-- ContestLeaderboardPage.jsx
-|           |-- ContestPage.jsx
-|           |-- ContestProblemsPage.jsx
-|           |-- ContestQueriesPage.jsx
-|           |-- ContestSubmissionsPage.jsx
-|           `-- PastContestsPage.jsx
-|-- routes/
-|   `-- AppRouter.jsx
-|-- styles/
-|   `-- index.css
-|-- App.jsx
-`-- main.jsx
-```
-
-## Backend Structure
-
-```text
-backend/src/
-|-- config/
-|   `-- db.js
-|-- controllers/
-|   |-- auth.controller.js
-|   `-- contest.controller.js
-|-- middleware/
-|   `-- auth.middleware.js
-|-- routes/
-|   |-- auth.routes.js
-|   `-- contest.routes.js
-|-- services/
-|   `-- contest.service.js
-|-- utils/
-|   `-- response.js
-|-- validators/
-|   `-- contest.validator.js
-`-- server.js
+http://localhost:5180
 ```
