@@ -11,9 +11,9 @@ PROJECT_ROOT = BASE_DIR.parent
 load_dotenv(PROJECT_ROOT / "backend" / ".env")
 load_dotenv(BASE_DIR / ".env", override=True)
 
-from config.db import check_database_connection  # noqa: E402
-from routes.auth_routes import auth_bp  # noqa: E402
-from routes.contest_routes import contest_bp  # noqa: E402
+from config.db import check_database_connection
+from routes.auth_routes import auth_bp
+from routes.contest_routes import contest_bp
 
 
 def create_app():

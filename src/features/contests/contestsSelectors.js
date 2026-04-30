@@ -33,4 +33,10 @@ export const selectRegisteredUpcomingIds = createSelector(
       .filter((contest) => contest.registered)
       .map((contest) => contest.id),
 );
+
+export const selectLeaderboard=(state) => state.contests.leaderboard.data;
+export const selectLeaderboardLoading=(state) =>
+  state.contests.leaderboard.isLoading;
+export const selectLeaderboardError = (state) =>
+  state.contests.leaderboard.error;
 //

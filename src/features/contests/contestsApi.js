@@ -68,3 +68,15 @@ export async function getContestDetailsApi(contestId) {
 
   return parseResponse(response);
 }
+
+export async function getContestLeaderboardApi(contestId){
+  const response=await fetch(
+    `${API_URL}/api/contests/${contestId}/leaderboard`,
+    {
+      method:"GET",
+      headers:getAuthHeaders(),
+
+    },
+  );
+  return parseResponse(response);
+}

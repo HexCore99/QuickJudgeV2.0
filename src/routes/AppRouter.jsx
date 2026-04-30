@@ -12,6 +12,7 @@ import ContestProblemsPage from "../pages/student/contests/ContestProblemsPage";
 import ContestQueriesPage from "../pages/student/contests/ContestQueriesPage";
 import ContestSubmissionsPage from "../pages/student/contests/ContestSubmissionsPage";
 import PastContestsPage from "../pages/student/contests/PastContestsPage";
+import ProfilePage from "../pages/student/ProfilePage";
 
 const router = createBrowserRouter([
   {
@@ -24,6 +25,7 @@ const router = createBrowserRouter([
     path: "/student",
     element: <StudentLayout />,
     children: [
+      {path:"profile",element:<ProfilePage/>},
       { path: "contests", element: <ContestPage /> },
       { path: "contests/past", element: <PastContestsPage /> },
       {
