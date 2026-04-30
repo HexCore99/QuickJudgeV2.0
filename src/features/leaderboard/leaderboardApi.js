@@ -1,0 +1,36 @@
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+async function parseResponse(resp) {
+  const contentType = resp.headers.get("content-type") || "";
+  const isJson = contentType.includes("application/json");
+  const data = isJson ? await resp.json() : await resp.text();
+
+  if (!resp.ok) {
+    if (isJson) throw new Error(data.message || "Something went wrong");
+    throw new Error(`Request failed with status ${resp.status}`);
+  }
+
+  return data;
+}
+
+function getAuthHeaders() {
+  const token = localStorage.getItem("qj_token");
+  return {
+    "Content-Type": "application/json",
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+}
+
+/**
+ * GET /api/leaderboard
+ * Expected response shape:
+ * [{ rank, userId, username, rating, totalSolved }, ...]
+ */
+export async function getGlobalLeaderboardApi() {
+  const response = await fetch(`${API_URL}/api/leaderboard`, {
+    method: "GET",
+    headers: getAuthHeaders(),
+  });
+
+  return parseResponse(response);
+}

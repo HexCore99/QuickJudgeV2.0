@@ -14,6 +14,7 @@ import PastContestsPage from "../features/contests/PastContestsPage";
 import ProfilePage from "../pages/student/ProfilePage";
 import ContestProblemsTable from "../features/contests/components/contestDetails/ContestProblemsTable";
 import ContestProblems from "../features/contests/components/contestDetails/ContestProblems";
+import GlobalLeaderboardPage from "../pages/student/leaderboard/GlobalLeaderboardPage";
 
 const router = createBrowserRouter([
   {
@@ -29,6 +30,7 @@ const router = createBrowserRouter([
       { path: "profile", element: <ProfilePage /> },
       { path: "contests", element: <ContestPage /> },
       { path: "contests/past", element: <PastContestsPage /> },
+      { path: "leaderboard", element: <GlobalLeaderboardPage /> },
       {
         path: ":contestId",
         element: <ContestLayoutPage />,
