@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Bell, Pin } from "lucide-react";
+import { Bell } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 import {
@@ -63,13 +63,6 @@ function ContestAnnouncementsPage() {
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm"
         >
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            {announcement.pinned && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">
-                <Pin size={12} />
-                Pinned
-              </span>
-            )}
-
             <span className="text-xs font-medium text-slate-400">
               {announcement.postedAt}
             </span>
