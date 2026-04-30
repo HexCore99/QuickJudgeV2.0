@@ -1,73 +1,14 @@
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import { useOutletContext } from "react-router-dom";
 import { Send } from "lucide-react";
-import ContestSubmissionsTable from "../../../features/contests/components/contestDetails/ContestSubmissionsTable";
-
-/* Temp data, pore backend nibo */
-const MOCK_SUBMISSIONS = [
-  {
-    id: 9,
-    problemCode: "D",
-    problemTitle: "Shortest Route Rebuild",
-    verdict: "TLE",
-    language: "C++17",
-    runtime: "2001ms",
-    timeStr: "1h 47m ago",
-  },
-  {
-    id: 8,
-    problemCode: "C",
-    problemTitle: "Tree Teleport",
-    verdict: "AC",
-    language: "C++17",
-    runtime: "84ms",
-    timeStr: "1h 22m ago",
-  },
-  {
-    id: 7,
-    problemCode: "C",
-    problemTitle: "Tree Teleport",
-    verdict: "WA",
-    language: "C++17",
-    runtime: "76ms",
-    timeStr: "1h 31m ago",
-  },
-  {
-    id: 6,
-    problemCode: "B",
-    problemTitle: "Greedy Interval Merge",
-    verdict: "AC",
-    language: "C++17",
-    runtime: "42ms",
-    timeStr: "58m ago",
-  },
-  {
-    id: 5,
-    problemCode: "B",
-    problemTitle: "Greedy Interval Merge",
-    verdict: "CE",
-    language: "C++17",
-    runtime: null,
-    timeStr: "1h 04m ago",
-  },
-  {
-    id: 4,
-    problemCode: "A",
-    problemTitle: "Minimum Path in DAG",
-    verdict: "AC",
-    language: "Python 3",
-    runtime: "210ms",
-    timeStr: "1h 49m ago",
-  },
-  {
-    id: 3,
-    problemCode: "A",
-    problemTitle: "Minimum Path in DAG",
-    verdict: "WA",
-    language: "Python 3",
-    runtime: "188ms",
-    timeStr: "1h 55m ago",
-  },
-];
+import ContestSubmissionsTable from "./components/contestDetails/ContestSubmissionsTable";
+import {
+  selectContestSubmissions,
+  selectContestSubmissionsError,
+  selectContestSubmissionsLoading,
+} from "./contestsSelectors";
+import { fetchContestSubmissions } from "./contestsThunks";
 
 function SubmissionsSummaryBar({ submissions }) {
   const total = submissions.length;
@@ -113,13 +54,21 @@ function SubmissionsSummaryBar({ submissions }) {
 }
 
 function ContestSubmissionsPage() {
-  const { contestDetails } = useOutletContext();
-  // pore backend use hobe
-  const submissions = MOCK_SUBMISSIONS;
+  const dispatch = useDispatch();
+  const { contestId } = useOutletContext();
+
+  const submissions = useSelector(selectContestSubmissions);
+  const isLoading = useSelector(selectContestSubmissionsLoading);
+  const error = useSelector(selectContestSubmissionsError);
+
+  useEffect(() => {
+    if (contestId) {
+      dispatch(fetchContestSubmissions(contestId));
+    }
+  }, [dispatch, contestId]);
 
   return (
     <div className="space-y-4">
-      
       <div className="flex items-center gap-2">
         <Send size={15} className="text-amber-600" />
         <span className="text-sm font-semibold text-slate-700">
@@ -130,9 +79,27 @@ function ContestSubmissionsPage() {
         </span>
       </div>
 
-      <SubmissionsSummaryBar submissions={submissions} />
+      {error && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-700">
+          {error}
+        </div>
+      )}
 
-      <ContestSubmissionsTable submissions={submissions} />
+      {isLoading ? (
+        <div className="space-y-2">
+          {[...Array(5)].map((_, i) => (
+            <div
+              key={i}
+              className="h-12 animate-pulse rounded-xl bg-slate-100"
+            />
+          ))}
+        </div>
+      ) : (
+        <>
+          <SubmissionsSummaryBar submissions={submissions} />
+          <ContestSubmissionsTable submissions={submissions} />
+        </>
+      )}
     </div>
   );
 }

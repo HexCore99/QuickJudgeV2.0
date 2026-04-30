@@ -34,9 +34,22 @@ export const selectRegisteredUpcomingIds = createSelector(
       .map((contest) => contest.id),
 );
 
-export const selectLeaderboard=(state) => state.contests.leaderboard.data;
-export const selectLeaderboardLoading=(state) =>
+export const selectLeaderboard = (state) => state.contests.leaderboard.data;
+export const selectLeaderboardLoading = (state) =>
   state.contests.leaderboard.isLoading;
 export const selectLeaderboardError = (state) =>
   state.contests.leaderboard.error;
-//
+
+export const selectContestSubmissions = (state) =>
+  state.contests.submissions.data;
+export const selectContestSubmissionsLoading = (state) =>
+  state.contests.submissions.isLoading;
+export const selectContestSubmissionsError = (state) =>
+  state.contests.submissions.error;
+
+export const selectContestAnnouncements = (state) =>
+  state.contests.announcements.data;
+export const selectContestAnnouncementsLoading = (state) =>
+  state.contests.announcements.isLoading;
+export const selectContestAnnouncementsError = (state) =>
+  state.contests.announcements.error;

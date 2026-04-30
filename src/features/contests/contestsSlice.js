@@ -1,7 +1,9 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
+  fetchContestAnnouncements,
   fetchContestDetails,
   fetchContestLeaderboard,
+  fetchContestSubmissions,
   fetchContests,
   registerUpcomingContest,
   verifyContestPassword,
@@ -32,6 +34,18 @@ const initialState = {
   
   leaderboard: {
     data: null,
+    isLoading: false,
+    error: null,
+  },
+
+  submissions: {
+    data: [],
+    isLoading: false,
+    error: null,
+  },
+
+  announcements: {
+    data: [],
     isLoading: false,
     error: null,
   },
@@ -70,6 +84,15 @@ const contestsSlice = createSlice({
       state.contestDetails.data = null;
       state.contestDetails.isLoading = false;
       state.contestDetails.error = null;
+      state.leaderboard.data = null;
+      state.leaderboard.isLoading = false;
+      state.leaderboard.error = null;
+      state.submissions.data = [];
+      state.submissions.isLoading = false;
+      state.submissions.error = null;
+      state.announcements.data = [];
+      state.announcements.isLoading = false;
+      state.announcements.error = null;
     },
   },
 
@@ -138,16 +161,45 @@ const contestsSlice = createSlice({
       })
 
       .addCase(fetchContestLeaderboard.pending, (state) => {
-        state.leaderboard.isLoading=true;
-        state.leaderboard.error=null;
+        state.leaderboard.isLoading = true;
+        state.leaderboard.error = null;
       })
-      .addCase(fetchContestLeaderboard.fulfilled, (state,action) => {
-        state.leaderboard.isLoading=false;
-        state.leaderboard.data=action.payload;
+      .addCase(fetchContestLeaderboard.fulfilled, (state, action) => {
+        state.leaderboard.isLoading = false;
+        state.leaderboard.data = action.payload;
       })
-      .addCase(fetchContestLeaderboard.rejected, (state,action) => {
-        state.leaderboard.isLoading=false;
-        state.leaderboard.error=action.payload || "Failed to fetch leaderbard."
+      .addCase(fetchContestLeaderboard.rejected, (state, action) => {
+        state.leaderboard.isLoading = false;
+        state.leaderboard.error =
+          action.payload || "Failed to fetch leaderboard.";
+      })
+
+      .addCase(fetchContestSubmissions.pending, (state) => {
+        state.submissions.isLoading = true;
+        state.submissions.error = null;
+      })
+      .addCase(fetchContestSubmissions.fulfilled, (state, action) => {
+        state.submissions.isLoading = false;
+        state.submissions.data = action.payload || [];
+      })
+      .addCase(fetchContestSubmissions.rejected, (state, action) => {
+        state.submissions.isLoading = false;
+        state.submissions.error =
+          action.payload || "Failed to fetch contest submissions.";
+      })
+
+      .addCase(fetchContestAnnouncements.pending, (state) => {
+        state.announcements.isLoading = true;
+        state.announcements.error = null;
+      })
+      .addCase(fetchContestAnnouncements.fulfilled, (state, action) => {
+        state.announcements.isLoading = false;
+        state.announcements.data = action.payload || [];
+      })
+      .addCase(fetchContestAnnouncements.rejected, (state, action) => {
+        state.announcements.isLoading = false;
+        state.announcements.error =
+          action.payload || "Failed to fetch contest announcements.";
       });
   },
 });

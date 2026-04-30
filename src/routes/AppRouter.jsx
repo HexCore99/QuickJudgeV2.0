@@ -4,15 +4,16 @@ import LandingPage from "../pages/public/LandingPage";
 import LoginPage from "../pages/public/LoginPage";
 import SignupPage from "../pages/public/SignupPage";
 import StudentLayout from "../components/layout/StudentLayout";
-import ContestAnnouncementsPage from "../pages/student/contests/ContestAnnouncementsPage";
-import ContestLayoutPage from "../pages/student/contests/ContestLayoutPage";
-import ContestLeaderboardPage from "../pages/student/contests/ContestLeaderboardPage";
-import ContestPage from "../pages/student/contests/ContestPage";
-import ContestProblemsPage from "../pages/student/contests/ContestProblemsPage";
-import ContestQueriesPage from "../pages/student/contests/ContestQueriesPage";
-import ContestSubmissionsPage from "../pages/student/contests/ContestSubmissionsPage";
-import PastContestsPage from "../pages/student/contests/PastContestsPage";
+import ContestAnnouncements from "../features/contests/components/contestDetails/ContestAnnouncements";
+import ContestLayoutPage from "../pages/student//ContestLayoutPage";
+import ContestLeaderboardPage from "../features/contests/components/contestDetails/ContestLeaderboard";
+import ContestPage from "../pages/student/ContestPage";
+import ContestQueriesPage from "../features/contests/components/contestDetails/ContestQueries";
+import ContestSubmissionsPage from "../features/contests/components/contestDetails/ContestSubmissions";
+import PastContestsPage from "../features/contests/PastContestsPage";
 import ProfilePage from "../pages/student/ProfilePage";
+import ContestProblemsTable from "../features/contests/components/contestDetails/ContestProblemsTable";
+import ContestProblems from "../features/contests/components/contestDetails/ContestProblems";
 
 const router = createBrowserRouter([
   {
@@ -25,7 +26,7 @@ const router = createBrowserRouter([
     path: "/student",
     element: <StudentLayout />,
     children: [
-      {path:"profile",element:<ProfilePage/>},
+      { path: "profile", element: <ProfilePage /> },
       { path: "contests", element: <ContestPage /> },
       { path: "contests/past", element: <PastContestsPage /> },
       {
@@ -33,10 +34,10 @@ const router = createBrowserRouter([
         element: <ContestLayoutPage />,
         children: [
           { index: true, element: <Navigate to="problems" replace /> },
-          { path: "problems", element: <ContestProblemsPage /> },
+          { path: "problems", element: <ContestProblems /> },
           { path: "submissions", element: <ContestSubmissionsPage /> },
           { path: "leaderboard", element: <ContestLeaderboardPage /> },
-          { path: "announcements", element: <ContestAnnouncementsPage /> },
+          { path: "announcements", element: <ContestAnnouncements /> },
           { path: "queries", element: <ContestQueriesPage /> },
         ],
       },

@@ -2,18 +2,18 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { CalendarDays, Clock3, Flag } from "lucide-react";
-import AppSearchInput from "../../../components/common/AppSearchInput";
-import StudentTopTabs from "../../../components/layout/StudentTopTabs";
-import ContestFilterBar from "../../../features/contests/components/ContestFilterBar";
-import ContestPasswordModal from "../../../features/contests/components/ContestPasswordModal";
-import ContestSection from "../../../features/contests/components/ContestSection";
-import PastContestTable from "../../../features/contests/components/PastContestTable";
+import AppSearchInput from "../../components/common/AppSearchInput";
+import StudentTopTabs from "../../components/layout/StudentTopTabs";
+import ContestFilterBar from "../../features/contests/components/ContestFilterBar";
+import ContestPasswordModal from "../../features/contests/components/ContestPasswordModal";
+import ContestSection from "../../features/contests/components/ContestSection";
+import PastContestTable from "../../features/contests/components/PastContestTable";
 import {
   clearContestPasswordError,
   closeContestPasswordModal,
   openContestPasswordModal,
   setContestPasswordInput,
-} from "../../../features/contests/contestsSlice";
+} from "../../features/contests/contestsSlice";
 import {
   selectContestFilters,
   selectContestPasswordModal,
@@ -23,12 +23,12 @@ import {
   selectLiveContests,
   selectPastContests,
   selectSortedUpcomingContests,
-} from "../../../features/contests/contestsSelectors";
+} from "../../features/contests/contestsSelectors";
 import {
   fetchContests,
   registerUpcomingContest,
   verifyContestPassword,
-} from "../../../features/contests/contestsThunks";
+} from "../../features/contests/contestsThunks";
 
 function ContestPageHero({ search, setSearch }) {
   return (

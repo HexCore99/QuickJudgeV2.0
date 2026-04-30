@@ -6,9 +6,9 @@ import {
   selectLeaderboard,
   selectLeaderboardError,
   selectLeaderboardLoading,
-} from "../../../features/contests/contestsSelectors";
-import { fetchContestLeaderboard } from "../../../features/contests/contestsThunks";
-import ContestLeaderboardTable from "../../../features/contests/components/contestDetails/ContestLeaderboardTable";
+} from "../../contestsSelectors";
+import { fetchContestLeaderboard } from "../../contestsThunks";
+import ContestLeaderboardTable from "./ContestLeaderboardTable";
 
 /* Temporary data */
 function buildMockLeaderboard(problems) {
