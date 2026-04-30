@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 import { History } from "lucide-react";
 import { useDispatch, useSelector } from "react-redux";
-import AppSearchInput from "../../../components/common/AppSearchInput";
-import StudentTopTabs from "../../../components/layout/StudentTopTabs";
-import PastContestTable from "../../../features/contests/components/PastContestTable";
+import AppSearchInput from "../../components/common/AppSearchInput";
+import StudentTopTabs from "../../components/layout/StudentTopTabs";
+import PastContestTable from "./components/PastContestTable";
 import {
   selectContestsError,
   selectContestsHasFetched,
   selectContestsLoading,
   selectPastContests,
-} from "../../../features/contests/contestsSelectors";
-import { fetchContests } from "../../../features/contests/contestsThunks";
+} from "./contestsSelectors";
+import { fetchContests } from "./contestsThunks";
 
 function PastContestsHero({ search, setSearch }) {
   return (

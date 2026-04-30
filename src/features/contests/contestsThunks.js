@@ -1,7 +1,9 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
+  getContestAnnouncementsApi,
   getContestDetailsApi,
   getContestLeaderboardApi,
+  getContestSubmissionsApi,
   getContestsApi,
   registerUpcomingContestApi,
   verifyContestPasswordApi,
@@ -67,6 +69,32 @@ export const fetchContestLeaderboard = createAsyncThunk(
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.message || "Failed to fetch leaderboard.",
+      );
+    }
+  },
+);
+
+export const fetchContestSubmissions = createAsyncThunk(
+  "contests/fetchContestSubmissions",
+  async (contestId, thunkAPI) => {
+    try {
+      return await getContestSubmissionsApi(contestId);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to fetch contest submissions.",
+      );
+    }
+  },
+);
+
+export const fetchContestAnnouncements = createAsyncThunk(
+  "contests/fetchContestAnnouncements",
+  async (contestId, thunkAPI) => {
+    try {
+      return await getContestAnnouncementsApi(contestId);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to fetch contest announcements.",
       );
     }
   },
