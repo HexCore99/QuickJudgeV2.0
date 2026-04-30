@@ -14,6 +14,9 @@ import PastContestsPage from "../features/contests/PastContestsPage";
 import ProfilePage from "../pages/student/ProfilePage";
 import ContestProblemsTable from "../features/contests/components/contestDetails/ContestProblemsTable";
 import ContestProblems from "../features/contests/components/contestDetails/ContestProblems";
+import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminLayout from "../features/admin/components/AdminLayout";
+
 
 const router = createBrowserRouter([
   {
@@ -43,6 +46,12 @@ const router = createBrowserRouter([
       },
     ],
   },
+   { path: "/admin", element: <AdminLayout />, 
+        children: [
+          { index: true, element: <Navigate to="dashboard" replace /> },
+          { path: "dashboard", element: <AdminDashboard /> },
+        ],
+   },
 ]);
 
 export default router;
