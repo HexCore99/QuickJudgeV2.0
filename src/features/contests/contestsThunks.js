@@ -3,9 +3,11 @@ import {
   getContestAnnouncementsApi,
   getContestDetailsApi,
   getContestLeaderboardApi,
+  getContestQueriesApi,
   getContestSubmissionsApi,
   getContestsApi,
   registerUpcomingContestApi,
+  submitContestQueryApi,
   verifyContestPasswordApi,
 } from "./contestsApi";
 
@@ -100,3 +102,28 @@ export const fetchContestAnnouncements = createAsyncThunk(
   },
 );
 
+export const fetchContestQueries = createAsyncThunk(
+  "contests/fetchContestQueries",
+  async (contestId, thunkAPI) => {
+    try {
+      return await getContestQueriesApi(contestId);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to fetch contest queries.",
+      );
+    }
+  },
+);
+
+export const submitQuery = createAsyncThunk(
+  "contests/submitQuery",
+  async ({ contestId, question }, thunkAPI) => {
+    try {
+      return await submitContestQueryApi({ contestId, question });
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to submit your question.",
+      );
+    }
+  },
+);

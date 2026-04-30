@@ -3,9 +3,11 @@ import {
   fetchContestAnnouncements,
   fetchContestDetails,
   fetchContestLeaderboard,
+  fetchContestQueries,
   fetchContestSubmissions,
   fetchContests,
   registerUpcomingContest,
+  submitQuery,
   verifyContestPassword,
 } from "./contestsThunks";
 
@@ -31,7 +33,7 @@ const initialState = {
     isLoading: false,
     error: null,
   },
-  
+
   leaderboard: {
     data: null,
     isLoading: false,
@@ -48,6 +50,14 @@ const initialState = {
     data: [],
     isLoading: false,
     error: null,
+  },
+
+  queries: {
+    data: [],
+    isLoading: false,
+    error: null,
+    isSubmitting: false,
+    submitError: null,
   },
 };
 
@@ -93,6 +103,19 @@ const contestsSlice = createSlice({
       state.announcements.data = [];
       state.announcements.isLoading = false;
       state.announcements.error = null;
+      state.queries.data = [];
+      state.queries.isLoading = false;
+      state.queries.error = null;
+      state.queries.isSubmitting = false;
+      state.queries.submitError = null;
+    },
+
+    clearQueries(state) {
+      state.queries.data = [];
+      state.queries.isLoading = false;
+      state.queries.error = null;
+      state.queries.isSubmitting = false;
+      state.queries.submitError = null;
     },
   },
 
@@ -200,6 +223,34 @@ const contestsSlice = createSlice({
         state.announcements.isLoading = false;
         state.announcements.error =
           action.payload || "Failed to fetch contest announcements.";
+      })
+
+      .addCase(fetchContestQueries.pending, (state) => {
+        state.queries.isLoading = true;
+        state.queries.error = null;
+      })
+      .addCase(fetchContestQueries.fulfilled, (state, action) => {
+        state.queries.isLoading = false;
+        state.queries.data = action.payload || [];
+      })
+      .addCase(fetchContestQueries.rejected, (state, action) => {
+        state.queries.isLoading = false;
+        state.queries.error =
+          action.payload || "Failed to fetch contest queries.";
+      })
+
+      .addCase(submitQuery.pending, (state) => {
+        state.queries.isSubmitting = true;
+        state.queries.submitError = null;
+      })
+      .addCase(submitQuery.fulfilled, (state, action) => {
+        state.queries.isSubmitting = false;
+        state.queries.data = [action.payload, ...state.queries.data];
+      })
+      .addCase(submitQuery.rejected, (state, action) => {
+        state.queries.isSubmitting = false;
+        state.queries.submitError =
+          action.payload || "Failed to submit your question.";
       });
   },
 });
@@ -210,6 +261,7 @@ export const {
   setContestPasswordInput,
   clearContestPasswordError,
   clearContestDetails,
+  clearQueries,
 } = contestsSlice.actions;
 
 export default contestsSlice.reducer;
