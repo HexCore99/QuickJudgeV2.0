@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Trash2,
@@ -16,13 +16,9 @@ import {
 import StudentTopTabs from "../../components/layout/StudentTopTabs";
 import AdminMoreMenu from "../../features/admin/components/AdminMoreMenu"
 import { ADMIN_NAV_TABS } from "../../features/admin/AdminNavTabs";
-import {
-  createProblemApi,
-  getMyProblemApi,
-  updateProblemApi,
-} from "../../features/problems/problemsApi";
 
 const ADMIN_CREATE_TABS = ADMIN_NAV_TABS.map((tab) => ({ ...tab, end: true }));
+const LOCAL_PROBLEMS_KEY = "qj_admin_problems";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 const COMMON_TAGS = [
@@ -53,9 +49,21 @@ const initialFormValues = {
   memoryLimitMb: "256",
 };
 
+function getStoredProblems() {
+  try {
+    const savedProblems = localStorage.getItem(LOCAL_PROBLEMS_KEY);
+    return savedProblems ? JSON.parse(savedProblems) : [];
+  } catch {
+    return [];
+  }
+}
+
+function getLocalProblem(problemId) {
+  return getStoredProblems().find((problem) => String(problem.id) === problemId);
+}
+
 export default function CreateProblemPage() {
   const { problemId } = useParams();
-  const navigate = useNavigate();
   const isEditMode = Boolean(problemId);
 
   const [formValues, setFormValues] = useState(initialFormValues);
@@ -65,7 +73,6 @@ export default function CreateProblemPage() {
   const [newTag, setNewTag] = useState("");
   const [testCases, setTestCases] = useState([EMPTY_TEST_CASE]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
 
   const allTags = useMemo(() => [...COMMON_TAGS, ...customTags], [customTags]);
@@ -75,59 +82,47 @@ export default function CreateProblemPage() {
       return undefined;
     }
 
-    let isCancelled = false;
+    setIsLoading(true);
+    setError(null);
 
-    async function loadProblem() {
-      setIsLoading(true);
-      setError(null);
+    try {
+      const problem = getLocalProblem(problemId);
 
-      try {
-        const problem = await getMyProblemApi(problemId);
-
-        if (isCancelled) {
-          return;
-        }
-
-        setFormValues({
-          title: problem.title || "",
-          statement: problem.statement || "",
-          inputFormat: problem.inputFormat || "",
-          outputFormat: problem.outputFormat || "",
-          constraints: problem.constraints || "",
-          points: String(problem.points || 100),
-          timeLimitSeconds: String(problem.timeLimitSeconds || 1),
-          memoryLimitMb: String(problem.memoryLimitMb || 256),
-        });
-        setDifficulty(problem.difficulty || "Medium");
-
-        const problemTags = problem.tags || [];
-        setSelectedTags(problemTags);
-        setCustomTags(problemTags.filter((tag) => !COMMON_TAGS.includes(tag)));
-        setTestCases(
-          problem.testCases?.length
-            ? problem.testCases.map((testCase) => ({
-                input: testCase.input || "",
-                output: testCase.output || "",
-                isHidden: Boolean(testCase.isHidden),
-              }))
-            : [EMPTY_TEST_CASE],
-        );
-      } catch (err) {
-        if (!isCancelled) {
-          setError(err.message || "Failed to load problem.");
-        }
-      } finally {
-        if (!isCancelled) {
-          setIsLoading(false);
-        }
+      if (!problem) {
+        throw new Error("Problem not found in local storage.");
       }
+
+      setFormValues({
+        title: problem.title || "",
+        statement: problem.statement || "",
+        inputFormat: problem.inputFormat || "",
+        outputFormat: problem.outputFormat || "",
+        constraints: problem.constraints || "",
+        points: String(problem.points || 100),
+        timeLimitSeconds: String(problem.timeLimitSeconds || 1),
+        memoryLimitMb: String(problem.memoryLimitMb || 256),
+      });
+      setDifficulty(problem.difficulty || "Medium");
+
+      const problemTags = problem.tags || [];
+      setSelectedTags(problemTags);
+      setCustomTags(problemTags.filter((tag) => !COMMON_TAGS.includes(tag)));
+      setTestCases(
+        problem.testCases?.length
+          ? problem.testCases.map((testCase) => ({
+              input: testCase.input || "",
+              output: testCase.output || "",
+              isHidden: Boolean(testCase.isHidden),
+            }))
+          : [EMPTY_TEST_CASE],
+      );
+    } catch (err) {
+      setError(err.message || "Failed to load local problem.");
+    } finally {
+      setIsLoading(false);
     }
 
-    loadProblem();
-
-    return () => {
-      isCancelled = true;
-    };
+    return undefined;
   }, [isEditMode, problemId]);
 
   const handleFieldChange = (field, value) => {
@@ -177,59 +172,8 @@ export default function CreateProblemPage() {
     );
   };
 
-  const buildPayload = () => ({
-    ...formValues,
-    title: formValues.title.trim(),
-    statement: formValues.statement.trim(),
-    inputFormat: formValues.inputFormat.trim(),
-    outputFormat: formValues.outputFormat.trim(),
-    constraints: formValues.constraints.trim(),
-    difficulty,
-    points: Number(formValues.points),
-    timeLimitSeconds: Number(formValues.timeLimitSeconds),
-    memoryLimitMb: Number(formValues.memoryLimitMb),
-    tags: selectedTags,
-    testCases: testCases
-      .map((testCase, index) => ({
-        input: testCase.input,
-        output: testCase.output,
-        isHidden: testCase.isHidden,
-        sortOrder: index,
-      }))
-      .filter((testCase) => testCase.input.trim() || testCase.output.trim()),
-  });
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setError(null);
-
-    if (!formValues.title.trim()) {
-      setError("Problem title is required.");
-      return;
-    }
-
-    if (!formValues.statement.trim()) {
-      setError("Problem statement is required.");
-      return;
-    }
-
-    setIsSaving(true);
-
-    try {
-      const payload = buildPayload();
-
-      if (isEditMode) {
-        await updateProblemApi(problemId, payload);
-      } else {
-        await createProblemApi(payload);
-      }
-
-      navigate("/admin/problems");
-    } catch (err) {
-      setError(err.message || "Failed to save problem.");
-    } finally {
-      setIsSaving(false);
-    }
   };
 
   const inputClasses =
@@ -267,19 +211,18 @@ export default function CreateProblemPage() {
               </p>
             </div>
             <div className="flex gap-3">
-              <Link
-                to="/admin/problems"
-                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-[13px] font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+              <button
+                type="button"
+                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-[13px] font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 cursor-pointer"
               >
                 Cancel
-              </Link>
+              </button>
               <button
-                form="problem-form"
-                type="submit"
-                disabled={isSaving || isLoading}
-                className="rounded-xl bg-amber-600 px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
+                type="button"
+                disabled={isLoading}
+                className="rounded-xl bg-amber-600 px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
               >
-                {isSaving ? "Saving..." : "Save Problem"}
+                Save Problem
               </button>
             </div>
           </div>
