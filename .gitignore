@@ -33,3 +33,5 @@ xyz.html
 backend_flask/**/__pycache__/
 backend_flask/**/*.pyc
 backend_flask/.venv/
+__pycache__/
+*.py[cod]

@@ -53,3 +53,13 @@ export const selectContestAnnouncementsLoading = (state) =>
   state.contests.announcements.isLoading;
 export const selectContestAnnouncementsError = (state) =>
   state.contests.announcements.error;
+
+export const selectContestQueries = (state) => state.contests.queries.data;
+export const selectContestQueriesLoading = (state) =>
+  state.contests.queries.isLoading;
+export const selectContestQueriesError = (state) =>
+  state.contests.queries.error;
+export const selectContestQueriesSubmitting = (state) =>
+  state.contests.queries.isSubmitting;
+export const selectContestQueriesSubmitError = (state) =>
+  state.contests.queries.submitError;

@@ -396,6 +396,31 @@ const contestAnnouncementsById = {
   ],
 };
 
+const contestQueriesById = {
+  "WC-43L": [
+    {
+      id: 1,
+      contestId: "WC-43L",
+      username: "cipher_x",
+      question: "For Problem B, are the interval endpoints inclusive?",
+      status: "answered",
+      answer: "Yes. Both endpoints are inclusive.",
+      createdAt: "2026-04-02T20:18:00Z",
+      answeredAt: "2026-04-02T20:25:00Z",
+    },
+    {
+      id: 2,
+      contestId: "WC-43L",
+      username: "bytewitch",
+      question: "Can we assume the input graph in Problem D is connected?",
+      status: "pending",
+      answer: null,
+      createdAt: "2026-04-02T20:44:00Z",
+      answeredAt: null,
+    },
+  ],
+};
+
 const clone = (value) => JSON.parse(JSON.stringify(value));
 
 const mapProblemForLeaderboard = (problem) => ({
@@ -491,6 +516,23 @@ export function getMockContestSubmissions(contestId) {
 
 export function getMockContestAnnouncements(contestId) {
   return clone(contestAnnouncementsById[contestId] || []);
+}
+
+export function getMockContestQueries(contestId) {
+  return clone(contestQueriesById[contestId] || []);
+}
+
+export function getMockSubmitContestQuery({ contestId, question }) {
+  return clone({
+    id: Date.now(),
+    contestId,
+    username: "you",
+    question,
+    status: "pending",
+    answer: null,
+    createdAt: new Date().toISOString(),
+    answeredAt: null,
+  });
 }
 
 export function getMockRegisterUpcomingContest(contestId) {
