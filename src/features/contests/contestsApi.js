@@ -2,9 +2,11 @@ import {
   getMockContestAnnouncements,
   getMockContestDetails,
   getMockContestLeaderboard,
+  getMockContestQueries,
   getMockContestSubmissions,
   getMockContests,
   getMockRegisterUpcomingContest,
+  getMockSubmitContestQuery,
   getMockVerifyContestPassword,
 } from "./contestMockData";
 
@@ -34,4 +36,12 @@ export async function getContestSubmissionsApi(contestId) {
 
 export async function getContestAnnouncementsApi(contestId) {
   return getMockContestAnnouncements(contestId);
+}
+
+export async function getContestQueriesApi(contestId) {
+  return getMockContestQueries(contestId);
+}
+
+export async function submitContestQueryApi({ contestId, question }) {
+  return getMockSubmitContestQuery({ contestId, question });
 }
