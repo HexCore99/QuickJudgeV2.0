@@ -16,7 +16,7 @@ import ContestProblemsTable from "../features/contests/components/contestDetails
 import ContestProblems from "../features/contests/components/contestDetails/ContestProblems";
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminLayout from "../features/admin/components/AdminLayout";
-
+import CreateProblemPage from "../pages/admin/CreateProblemPage";
 
 const router = createBrowserRouter([
   {
@@ -50,6 +50,12 @@ const router = createBrowserRouter([
         children: [
           { index: true, element: <Navigate to="dashboard" replace /> },
           { path: "dashboard", element: <AdminDashboard /> },
+        ],
+   },
+      { path: "/admin/problems/create", element: <AdminLayout />, 
+        children: [
+          { index: true, element: <Navigate to="create_problem" replace /> },
+          { path: "create_problem", element: <CreateProblemPage /> },
         ],
    },
 ]);
