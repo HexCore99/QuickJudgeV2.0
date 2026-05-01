@@ -6,14 +6,14 @@ const ACTION_ITEMS = [
   {
     key: "contest",
     label: "Create Contest",
-    to: "/admin/contests/create",
+    to: "/admin/create_contest",
     Icon: Trophy,
     hoverClasses: "hover:bg-amber-50 hover:text-amber-700",
   },
   {
     key: "problem",
     label: "Create Problem",
-    to: "/admin/problems/create",
+    to: "/admin/create_problem",
     Icon: Code2,
     hoverClasses: "hover:bg-blue-50 hover:text-blue-700",
   },
@@ -52,12 +52,14 @@ export default function AdminMoreMenu({ excludeAction = null }) {
         }`}
       >
         {triggerLabel}{" "}
-        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown
+          className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
       </button>
 
       {isOpen && menuItems.length > 0 && (
-        <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
-          <div className="mb-1 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="absolute top-full right-0 mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+          <div className="mb-1 px-3 py-1.5 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
             Quick Actions
           </div>
           <div className="flex flex-col">
