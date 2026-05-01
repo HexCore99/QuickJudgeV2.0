@@ -6,10 +6,15 @@ const defaultTabs = [
   { key: "Problems", to: "/student/problems" },
   { key: "Contests", to: "/student/contests" },
   { key: "Leaderboard", to: "/student/leaderboard" },
-  { key: "Discuss", to: "/student/discuss" },
+  { key: "Discuss", to: "/student/discussion" },
 ];
 
-function StudentTopTabs({ tabs = defaultTabs, logoTo = "/", extraActions = null, navExtra = null }) {
+function StudentTopTabs({
+  tabs = defaultTabs,
+  logoTo = "/",
+  extraActions = null,
+  navExtra = null,
+}) {
   return (
     <header className="sticky top-0 z-30 border-b border-[#e8e4dd] bg-white">
       <div className="h-2 w-full bg-[#e8d3bc]" />
