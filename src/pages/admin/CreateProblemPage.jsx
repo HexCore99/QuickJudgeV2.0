@@ -13,11 +13,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-import StudentTopTabs from "../../components/layout/StudentTopTabs";
-import AdminMoreMenu from "../../features/admin/components/AdminMoreMenu"
-import { ADMIN_NAV_TABS } from "../../features/admin/AdminNavTabs";
 
-const ADMIN_CREATE_TABS = ADMIN_NAV_TABS.map((tab) => ({ ...tab, end: true }));
 const LOCAL_PROBLEMS_KEY = "qj_admin_problems";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
@@ -186,12 +182,6 @@ export default function CreateProblemPage() {
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-size-[24px_24px]" />
 
       <div className="relative z-1">
-        <StudentTopTabs
-          tabs={ADMIN_CREATE_TABS}
-          logoTo="/"
-          navExtra={<AdminMoreMenu excludeAction="problem" />}
-        />
-
         <main className="mx-auto max-w-7xl px-6 py-8 pb-20">
           <Link
             to="/admin/problems"

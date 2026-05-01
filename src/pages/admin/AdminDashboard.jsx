@@ -1,16 +1,11 @@
-import { Link } from "react-router-dom";
 import { Trophy, FileText, Zap, CalendarDays, Clock, Users, CheckCircle2, AlertCircle } from "lucide-react";
-// import StudentTopTabs from "../../../components/layout/StudentTopTabs";
-import { ADMIN_NAV_TABS } from "../../features/admin/AdminNavTabs";
-import AdminMoreMenu from "../../components/common/AdminMoreMenu";
-import StudentTopTabs from "../../components/layout/StudentTopTabs";
 
 
 const STATS = [
-  { label: "Total Contests",  value: 12, delta: "+2 this month", Icon: Trophy,       accent: "amber"   },
-  { label: "Total Problems",  value: 48, delta: "+5 this month", Icon: FileText,     accent: "blue"    },
-  { label: "Active Contests", value: 3,  delta: "Running now",   Icon: Zap,          accent: "emerald" },
-  { label: "Upcoming",        value: 2,  delta: "Next 7 days",   Icon: CalendarDays, accent: "violet"  },
+  { label: "Total Contests",  value: 12, Icon: Trophy,       accent: "amber"   },
+  { label: "Total Problems",  value: 48, Icon: FileText,     accent: "blue"    },
+  { label: "Active Contests", value: 3,  Icon: Zap,          accent: "emerald" },
+  { label: "Upcoming",        value: 2,  Icon: CalendarDays, accent: "violet"  },
 ];
 
 const CONTESTS = [
@@ -35,10 +30,10 @@ const diffStyles = {
 };
 
 const accentMap = {
-  amber: { card: "border-amber-200/80 bg-amber-50/40 hover:bg-amber-50/60 hover:border-amber-300", icon: "bg-amber-100 text-amber-600", val: "text-amber-700", delta: "text-amber-700 bg-amber-50" },
-  blue: { card: "border-blue-200/80 bg-blue-50/40 hover:bg-blue-50/60 hover:border-blue-300", icon: "bg-blue-100 text-blue-600", val: "text-blue-700", delta: "text-blue-700 bg-blue-50" },
-  emerald: { card: "border-emerald-200/80 bg-emerald-50/40 hover:bg-emerald-50/60 hover:border-emerald-300", icon: "bg-emerald-100 text-emerald-600", val: "text-emerald-700", delta: "text-emerald-700 bg-emerald-50" },
-  violet: { card: "border-violet-200/80 bg-violet-50/40 hover:bg-violet-50/60 hover:border-violet-300", icon: "bg-violet-100 text-violet-600", val: "text-violet-700", delta: "text-violet-700 bg-violet-50" },
+  amber: { card: "border-amber-200/80 bg-amber-50/40 hover:bg-amber-50/60 hover:border-amber-300", icon: "bg-amber-100 text-amber-600", val: "text-amber-700" },
+  blue: { card: "border-blue-200/80 bg-blue-50/40 hover:bg-blue-50/60 hover:border-blue-300", icon: "bg-blue-100 text-blue-600", val: "text-blue-700" },
+  emerald: { card: "border-emerald-200/80 bg-emerald-50/40 hover:bg-emerald-50/60 hover:border-emerald-300", icon: "bg-emerald-100 text-emerald-600", val: "text-emerald-700" },
+  violet: { card: "border-violet-200/80 bg-violet-50/40 hover:bg-violet-50/60 hover:border-violet-300", icon: "bg-violet-100 text-violet-600", val: "text-violet-700" },
 };
 
 function StatCard({ stat }) {
@@ -50,9 +45,6 @@ function StatCard({ stat }) {
       </div>
       <div className={`text-3xl font-bold tracking-tight ${a.val}`}>{stat.value}</div>
       <div className="mt-0.5 text-[13px] font-medium text-slate-500">{stat.label}</div>
-      <div className={`mt-3 inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${a.delta}`}>
-        {stat.delta}
-      </div>
     </div>
   );
 }
@@ -86,8 +78,6 @@ export default function AdminDashboard() {
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[length:24px_24px]" />
       
       <div className="relative z-[1]">
-        <StudentTopTabs tabs={ADMIN_NAV_TABS} logoTo="/" navExtra={<AdminMoreMenu />} />
-
         <main className="mx-auto max-w-7xl px-6 py-8 pb-20">
           <div className="mb-8">
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">Admin Dashboard</h1>
