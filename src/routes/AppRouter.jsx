@@ -18,6 +18,7 @@ import GlobalLeaderboardPage from "../pages/student/leaderboard/GlobalLeaderboar
 import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminLayout from "../features/admin/components/AdminLayout";
 import CreateProblemPage from "../pages/admin/CreateProblemPage";
+import CreateContestPage from "../pages/admin/CreateContestPage";
 
 const router = createBrowserRouter([
   {
@@ -55,6 +56,7 @@ const router = createBrowserRouter([
       { index: true, element: <Navigate to="dashboard" replace /> },
       { path: "dashboard", element: <AdminDashboard /> },
       { path: "create_problem", element: <CreateProblemPage /> },
+      { path: "create_contest", element: <CreateContestPage /> },
     ],
   },
 ]);
