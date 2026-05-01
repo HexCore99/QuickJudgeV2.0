@@ -21,6 +21,7 @@ import CreateProblemPage from "../pages/admin/CreateProblemPage";
 import CreateContestPage from "../pages/admin/CreateContestPage";
 import DiscussionPage from "../pages/student/discussion/DiscussionPage";
 import EditorialsPage from "../pages/admin/EditorialPage";
+import ProblemPage from "../pages/student/problems/ProblemPage";
 
 const router = createBrowserRouter([
   {
@@ -51,6 +52,10 @@ const router = createBrowserRouter([
         ],
       },
     ],
+  },
+  {
+    path: "/student/:contestId/problems/:problemId",
+    element: <ProblemPage />,
   },
   {
     path: "/admin",
