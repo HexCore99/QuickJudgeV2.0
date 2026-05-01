@@ -1,8 +1,6 @@
-from flask import Blueprint
-
 from controllers.auth_controller import login, signup
 
-auth_bp = Blueprint("auth", __name__)
 
-auth_bp.post("/login")(login)
-auth_bp.post("/signup")(signup)
+def register_auth_routes(app):
+    app.post("/api/auth/login")(login)
+    app.post("/api/auth/signup")(signup)

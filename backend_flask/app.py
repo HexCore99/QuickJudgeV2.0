@@ -12,8 +12,7 @@ load_dotenv(PROJECT_ROOT / "backend" / ".env")
 load_dotenv(BASE_DIR / ".env", override=True)
 
 from config.db import check_database_connection
-from routes.auth_routes import auth_bp
-from routes.contest_routes import contest_bp
+from routes.auth_routes import register_auth_routes
 
 
 def create_app():
@@ -33,8 +32,7 @@ def create_app():
             "message": "QuickJudge backend is running",
         }
 
-    app.register_blueprint(auth_bp, url_prefix="/api/auth")
-    app.register_blueprint(contest_bp, url_prefix="/api/contests")
+    register_auth_routes(app)
 
     return app
 
