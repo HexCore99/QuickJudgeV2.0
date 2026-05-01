@@ -19,6 +19,7 @@ import AdminDashboard from "../pages/admin/AdminDashboard";
 import AdminLayout from "../features/admin/components/AdminLayout";
 import CreateProblemPage from "../pages/admin/CreateProblemPage";
 import CreateContestPage from "../pages/admin/CreateContestPage";
+import DiscussionPage from "../pages/student/discussion/DiscussionPage";
 import EditorialsPage from "../pages/admin/EditorialPage";
 
 const router = createBrowserRouter([
@@ -36,6 +37,7 @@ const router = createBrowserRouter([
       { path: "contests", element: <ContestPage /> },
       { path: "contests/past", element: <PastContestsPage /> },
       { path: "leaderboard", element: <GlobalLeaderboardPage /> },
+      { path: "discussion", element: <DiscussionPage /> },
       {
         path: ":contestId",
         element: <ContestLayoutPage />,
