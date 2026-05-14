@@ -3,24 +3,26 @@ import PublicLayout from "../components/layout/PublicLayout";
 import LandingPage from "../pages/public/LandingPage";
 import LoginPage from "../pages/public/LoginPage";
 import SignupPage from "../pages/public/SignupPage";
+import ForgotPasswordPage from "../pages/public/ForgotPasswordPage";
+import ResetPasswordPage from "../pages/public/ResetPasswordPage";
+import PublicOnlyRoute from "./PublicOnlyRoute";
 import StudentLayout from "../components/layout/StudentLayout";
 import ContestAnnouncements from "../features/contests/components/contestDetails/ContestAnnouncements";
-import ContestLayoutPage from "../pages/student//ContestLayoutPage";
+import ContestLayoutPage from "../pages/student/contests/ContestLayoutPage";
 import ContestLeaderboardPage from "../features/contests/components/contestDetails/ContestLeaderboard";
-import ContestPage from "../pages/student/ContestPage";
+import ContestPage from "../pages/student/contests/ContestPage";
 import ContestQueriesPage from "../features/contests/components/contestDetails/ContestQueries";
 import ContestSubmissionsPage from "../features/contests/components/contestDetails/ContestSubmissions";
 import PastContestsPage from "../features/contests/PastContestsPage";
-import ProfilePage from "../pages/student/ProfilePage";
-import ContestProblemsTable from "../features/contests/components/contestDetails/ContestProblemsTable";
+import ProfilePage from "../pages/student/Profile/ProfilePage";
 import ContestProblems from "../features/contests/components/contestDetails/ContestProblems";
 import GlobalLeaderboardPage from "../pages/student/leaderboard/GlobalLeaderboardPage";
-import AdminDashboard from "../pages/admin/AdminDashboard";
+import AdminDashboard from "../pages/admin/dashboard/AdminDashboard";
 import AdminLayout from "../features/admin/components/AdminLayout";
-import CreateProblemPage from "../pages/admin/CreateProblemPage";
-import CreateContestPage from "../pages/admin/CreateContestPage";
-import DiscussionPage from "../pages/student/discussion/DiscussionPage";
-import EditorialsPage from "../pages/admin/EditorialPage";
+import CreateProblemPage from "../pages/admin/problems/CreateProblemPage";
+import CreateContestPage from "../pages/admin/contests/CreateContestPage";
+import DiscussionPage from "../pages/student/discussions/DiscussionPage";
+import EditorialsPage from "../pages/admin/editorials/EditorialPage";
 import ProblemPage from "../pages/student/problems/ProblemPage";
 
 const router = createBrowserRouter([
@@ -28,8 +30,38 @@ const router = createBrowserRouter([
     element: <PublicLayout />,
     children: [{ path: "/", element: <LandingPage /> }],
   },
-  { path: "/login", element: <LoginPage /> },
-  { path: "/signup", element: <SignupPage /> },
+  {
+    path: "/login",
+    element: (
+      <PublicOnlyRoute>
+        <LoginPage />
+      </PublicOnlyRoute>
+    ),
+  },
+  {
+    path: "/signup",
+    element: (
+      <PublicOnlyRoute>
+        <SignupPage />
+      </PublicOnlyRoute>
+    ),
+  },
+  {
+    path: "/forgot-password",
+    element: (
+      <PublicOnlyRoute>
+        <ForgotPasswordPage />
+      </PublicOnlyRoute>
+    ),
+  },
+  {
+    path: "/reset-password/:token",
+    element: (
+      <PublicOnlyRoute>
+        <ResetPasswordPage />
+      </PublicOnlyRoute>
+    ),
+  },
   {
     path: "/student",
     element: <StudentLayout />,

@@ -1,18 +1,18 @@
 import { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, Outlet, useParams } from "react-router-dom";
-import Error from "../../components/common/Error";
-import Loading from "../../components/common/Loading";
-import StudentTopTabs from "../../components/layout/StudentTopTabs";
-import ContestDetailsHeader from "../../features/contests/components/contestDetails/ContestDetailsHeader";
-import ContestTabs from "../../features/contests/components/contestDetails/ContestTabs";
-import { clearContestDetails } from "../../features/contests/contestsSlice";
+import Error from "../../../components/common/Error";
+import Loading from "../../../components/common/Loading";
+import StudentTopTabs from "../../../components/layout/StudentTopTabs";
+import ContestDetailsHeader from "../../../features/contests/components/contestDetails/ContestDetailsHeader";
+import ContestTabs from "../../../features/contests/components/contestDetails/ContestTabs";
+import { clearContestDetails } from "../../../features/contests/contestsSlice";
 import {
   selectContestDetails,
   selectContestDetailsError,
   selectContestDetailsLoading,
-} from "../../features/contests/contestsSelectors";
-import { fetchContestDetails } from "../../features/contests/contestsThunks";
+} from "../../../features/contests/contestsSelectors";
+import { fetchContestDetails } from "../../../features/contests/contestsThunks";
 
 function ContestLayoutPage() {
   const dispatch = useDispatch();

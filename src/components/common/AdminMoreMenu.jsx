@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ChevronDown, Trophy, Code2 } from "lucide-react";
+import { ChevronDown, Code2, Trophy } from "lucide-react";
 
 const ACTION_ITEMS = [
   {
@@ -23,12 +23,8 @@ export default function AdminMoreMenu({ excludeAction = null }) {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef(null);
   const menuItems = ACTION_ITEMS.filter((item) => item.key !== excludeAction);
-  const triggerLabel =
-    excludeAction === "contest"
-      ? "Create Contest"
-      : excludeAction === "problem"
-        ? "Create Problem"
-        : "More";
+  const activeAction = ACTION_ITEMS.find((item) => item.key === excludeAction);
+  const triggerLabel = activeAction?.label || "More";
   const isCurrentAction = excludeAction !== null;
 
   useEffect(() => {
@@ -52,12 +48,14 @@ export default function AdminMoreMenu({ excludeAction = null }) {
         }`}
       >
         {triggerLabel}{" "}
-        <ChevronDown className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown
+          className={`h-4 w-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
+        />
       </button>
 
       {isOpen && menuItems.length > 0 && (
-        <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
-          <div className="mb-1 px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+        <div className="absolute top-full right-0 mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white p-1.5 shadow-xl">
+          <div className="mb-1 px-3 py-1.5 text-[11px] font-bold tracking-wider text-slate-400 uppercase">
             Quick Actions
           </div>
           <div className="flex flex-col">

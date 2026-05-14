@@ -1,19 +1,60 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { User, Settings, LogOut } from "lucide-react";
 import { logout } from "../../features/auth/authSlice";
+import { useProfileAvatarUrl } from "../../features/profile/profileAvatar";
+import {
+  selectProfileHasFetched,
+  selectProfileLoading,
+  selectProfileUser,
+} from "../../features/profile/profileSelectors";
+import { fetchProfile } from "../../features/profile/profileThunks";
 
 const MENU_ITEMS = [
-  { label: "Profile",  to: "/student/profile", Icon: User     },
-  { label: "Settings", to: "/student/settings", Icon: Settings },
+  { label: "Profile", to: "/student/profile", Icon: User },
+  { label: "Settings", to: "/student/profile?tab=settings", Icon: Settings },
+];
+
+const ADMIN_MENU_ITEMS = [
+  { label: "Settings", to: "/admin/settings", Icon: Settings },
 ];
 
 export default function ProfileDropdown() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const user = useSelector(selectProfileUser);
+  const hasFetched = useSelector(selectProfileHasFetched);
+  const isLoading = useSelector(selectProfileLoading);
+  const authUser = useSelector((state) => state.auth.user);
+  const isAuthenticated = useSelector((state) => state.auth.isAuthenticated);
   const [open, setOpen] = useState(false);
   const ref = useRef(null);
+  const hasRequestedProfileRef = useRef(false);
+  const isAdmin = ["admin", "super_admin"].includes(authUser?.role);
+
+  useEffect(() => {
+    hasRequestedProfileRef.current = false;
+  }, [authUser?.id]);
+
+  useEffect(() => {
+    if (
+      isAuthenticated &&
+      !hasFetched &&
+      !isLoading &&
+      !hasRequestedProfileRef.current
+    ) {
+      hasRequestedProfileRef.current = true;
+      dispatch(fetchProfile());
+    }
+  }, [dispatch, hasFetched, isAuthenticated, isLoading]);
+
+  const menuItems = isAdmin ? ADMIN_MENU_ITEMS : MENU_ITEMS;
+  const avatarUrl = useProfileAvatarUrl(
+    user.avatarUrl,
+    user.email || authUser?.email,
+    80,
+  );
 
   // Close on outside click
   useEffect(() => {
@@ -38,16 +79,20 @@ export default function ProfileDropdown() {
       {/* Avatar button */}
       <button
         onClick={() => setOpen((prev) => !prev)}
-        className="h-10 w-10 cursor-pointer rounded-full border-2 border-amber-500 bg-[radial-gradient(circle_at_35%_30%,#d6d3d1,#78716c_45%,#1f2937_100%)] transition hover:ring-2 hover:ring-amber-300 hover:ring-offset-1 focus:outline-none"
+        className="h-10 w-10 cursor-pointer overflow-hidden rounded-full border-2 border-amber-500 bg-slate-100 transition hover:ring-2 hover:ring-amber-300 hover:ring-offset-1 focus:outline-none"
         aria-label="Profile menu"
-      />
+      >
+        <img
+          src={avatarUrl}
+          alt={authUser?.name || user.name || "Profile"}
+          className="h-full w-full object-cover"
+        />
+      </button>
 
       {/* Dropdown */}
       {open && (
-        <div
-          className="absolute right-0 mt-2 w-48 origin-top-right animate-[fadeSlideDown_0.15s_ease] rounded-xl border border-slate-200 bg-white py-1.5 shadow-lg"
-        >
-          {MENU_ITEMS.map((item) => (
+        <div className="absolute right-0 z-50 mt-2 w-48 origin-top-right animate-[fadeSlideDown_0.15s_ease] rounded-xl border border-slate-200 bg-white py-1.5 shadow-lg">
+          {menuItems.map((item) => (
             <Link
               key={item.label}
               to={item.to}

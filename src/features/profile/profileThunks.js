@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { getProfileApi, updateProfileApi } from "./profileAPI";
+import { getProfileApi, updateProfileApi } from "./profileApi";
 
 export const fetchProfile = createAsyncThunk(
   "profile/fetchProfile",
@@ -16,9 +16,9 @@ export const fetchProfile = createAsyncThunk(
 
 export const saveProfile = createAsyncThunk(
   "profile/saveProfile",
-  async (profileData, thunkAPI) => {
+  async (payload, thunkAPI) => {
     try {
-      return await updateProfileApi(profileData);
+      return await updateProfileApi(payload);
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.message || "Failed to update profile.",

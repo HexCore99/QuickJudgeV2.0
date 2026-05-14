@@ -8,8 +8,8 @@ import {
   X,
   Video,
 } from "lucide-react";
-import StudentTopTabs from "../../components/layout/StudentTopTabs";
-import AdminMoreMenu from "../../components/common/AdminMoreMenu";
+import StudentTopTabs from "../../../components/layout/StudentTopTabs";
+import AdminMoreMenu from "../../../components/common/AdminMoreMenu";
 
 
 export default function EditorialsPage() {

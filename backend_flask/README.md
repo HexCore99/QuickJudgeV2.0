@@ -20,6 +20,8 @@ You can also create `backend_flask/.env` to override those values for Flask only
 
 - `POST /api/auth/signup`
 - `POST /api/auth/login`
+- `POST /api/auth/forgot-password`
+- `POST /api/auth/reset-password`
 - `GET /api/contests`
 - `GET /api/contests/<contest_id>`
 - `POST /api/contests/<contest_id>/register`

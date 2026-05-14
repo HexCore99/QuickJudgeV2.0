@@ -1,13 +1,6 @@
 import { useState } from "react";
-import {
-  Flag,
-  Medal,
-  BarChart3,
-  TrendingUp,
-  ArrowUp,
-  ArrowDown,
-  Minus,
-} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowUp, ArrowDown, Minus } from "lucide-react";
 
 const filterOptions = [
   { k: "all", l: "All" },
@@ -15,53 +8,17 @@ const filterOptions = [
   { k: "unrated", l: "Unrated" },
 ];
 
-export default function ContestsPanel({ contests, onToast }) {
+export default function ContestsPanel({ contests }) {
+  const navigate = useNavigate();
   const [view, setView] = useState("all");
 
   const rated = contests.filter((c) => c.rated);
-  const bestRank = Math.min(...rated.map((c) => c.rank));
-  const avgRank = Math.round(
-    rated.reduce((s, c) => s + c.rank, 0) / rated.length,
-  );
-  const posDeltas = rated.filter((c) => c.delta > 0).length;
-
   const filtered =
     view === "all"
       ? contests
       : view === "rated"
         ? rated
         : contests.filter((c) => !c.rated);
-
-  const summaryCards = [
-    {
-      l: "Total",
-      v: contests.length,
-      Icon: Flag,
-      co: "text-blue-600",
-      bg: "bg-blue-600/6",
-    },
-    {
-      l: "Best Rank",
-      v: `#${bestRank}`,
-      Icon: Medal,
-      co: "text-amber-600",
-      bg: "bg-amber-600/7",
-    },
-    {
-      l: "Avg Rank",
-      v: `#${avgRank}`,
-      Icon: BarChart3,
-      co: "text-violet-600",
-      bg: "bg-violet-600/6",
-    },
-    {
-      l: "Positive",
-      v: `${posDeltas}/${rated.length}`,
-      Icon: TrendingUp,
-      co: "text-green-600",
-      bg: "bg-green-600/6",
-    },
-  ];
 
   return (
     <div className="space-y-6">
@@ -91,30 +48,6 @@ export default function ContestsPanel({ contests, onToast }) {
           </div>
         </div>
 
-        {/* Summary stats */}
-        <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {summaryCards.map((card) => (
-            <div
-              key={card.l}
-              className="rounded-xl border border-black/7 bg-slate-50 p-3"
-            >
-              <div className="mb-1.5 flex items-center gap-2">
-                <span
-                  className={`flex h-5 w-5 items-center justify-center rounded-md ${card.bg}`}
-                >
-                  <card.Icon className={`h-2.5 w-2.5 ${card.co}`} />
-                </span>
-                <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
-                  {card.l}
-                </span>
-              </div>
-              <div className="font-mono text-lg font-bold text-slate-800">
-                {card.v}
-              </div>
-            </div>
-          ))}
-        </div>
-
         {/* Contest list */}
         <div className="space-y-1">
           {filtered.map((c) => {
@@ -129,15 +62,11 @@ export default function ContestsPanel({ contests, onToast }) {
             const deltaLabel = (c.delta > 0 ? "+" : "") + c.delta;
 
             return (
-              <div
+              <button
+                type="button"
                 key={c.id}
-                className="grid cursor-pointer grid-cols-12 items-center gap-2 rounded-xl px-4 py-3.5 transition-colors hover:bg-slate-50"
-                onClick={() =>
-                  onToast(
-                    `Navigating to contest: ${c.name} (${c.id})`,
-                    "info",
-                  )
-                }
+                className="grid w-full cursor-pointer grid-cols-12 items-center gap-2 rounded-xl px-4 py-3.5 text-left transition-colors hover:bg-slate-50 focus:ring-2 focus:ring-amber-500/30 focus:outline-none"
+                onClick={() => navigate(`/student/contests/${c.id}`)}
               >
                 <div className="col-span-5">
                   <div className="text-sm font-medium text-slate-800">
@@ -163,9 +92,7 @@ export default function ContestsPanel({ contests, onToast }) {
                   <div className="font-mono text-sm font-medium text-slate-800">
                     #{c.rank}
                   </div>
-                  <div className="text-[10px] text-slate-400">
-                    of {c.total}
-                  </div>
+                  <div className="text-[10px] text-slate-400">of {c.total}</div>
                 </div>
 
                 <div className="col-span-2 hidden text-center sm:block">
@@ -195,7 +122,7 @@ export default function ContestsPanel({ contests, onToast }) {
                     <span className="text-xs text-slate-400">—</span>
                   )}
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>

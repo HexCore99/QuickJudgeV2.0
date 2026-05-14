@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
-import CreateContestGeneralInformation from "../../features/admin/components/CreateContestGeneralInformation";
-import CreateContestProblemSelection from "../../features/admin/components/CreateContestProblemSelection";
-import CreateContestSettings from "../../features/admin/components/CreateContestSettings";
+import CreateContestGeneralInformation from "../../../features/admin/components/CreateContestGeneralInformation";
+import CreateContestProblemSelection from "../../../features/admin/components/CreateContestProblemSelection";
+import CreateContestSettings from "../../../features/admin/components/CreateContestSettings";
 
 const EMPTY_FORM = {
   title: "",

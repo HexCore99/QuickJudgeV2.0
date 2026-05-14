@@ -7,7 +7,7 @@ const dayLabels = [
   { idx: 5, label: "Fri" },
 ];
 
- function getLevel(count) {
+export function getLevel(count) {
   if (count === 0) return 0;
   if (count <= 2) return 1;
   if (count <= 4) return 2;
@@ -163,7 +163,7 @@ export default function Heatmap({ dataWeeks }) {
         {levelColors.map((cls, i) => (
           <div
             key={i}
-            className={`h-2.75 w-2.75 rounded-sm ${cls}`}
+            className={`h-[11px] w-[11px] rounded-sm ${cls}`}
           />
         ))}
         <span>More</span>

@@ -1,5 +1,4 @@
 import { X } from "lucide-react";
-import Input from "../../../components/common/Input";
 
 export default function EditProfileModal({ isOpen, user, onClose, onSave }) {
   function handleSubmit(e) {
@@ -7,17 +6,20 @@ export default function EditProfileModal({ isOpen, user, onClose, onSave }) {
     const formData = new FormData(e.currentTarget);
 
     onSave({
-      name: formData.get("name").trim(),
-      handle: formData.get("handle").trim(),
-      dept: formData.get("dept").trim(),
-      bio: formData.get("bio").trim(),
-      git: formData.get("git").trim(),
+      name: String(formData.get("name") || "").trim(),
+      dept: String(formData.get("dept") || "").trim(),
+      bio: String(formData.get("bio") || "").trim(),
+      git: String(formData.get("git") || "").trim(),
+      avatarUrl: String(formData.get("avatarUrl") || "").trim(),
     });
   }
 
   function handleBackdropClick(e) {
     if (e.target === e.currentTarget) onClose();
   }
+
+  const inputBase =
+    "w-full rounded-xl border border-black/7 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 outline-none transition-colors focus:border-amber-600/30";
 
   return (
     <div
@@ -31,7 +33,7 @@ export default function EditProfileModal({ isOpen, user, onClose, onSave }) {
     >
       <div
         className={`w-[90%] max-w-[520px] rounded-2xl border border-amber-600/20 bg-white p-8 shadow-2xl transition-all duration-350 ${
-          isOpen ? "scale-100 translate-y-0" : "scale-92 translate-y-5"
+          isOpen ? "translate-y-0 scale-100" : "translate-y-5 scale-92"
         }`}
         style={{
           transitionTimingFunction: "cubic-bezier(0.22, 1, 0.36, 1)",
@@ -48,35 +50,67 @@ export default function EditProfileModal({ isOpen, user, onClose, onSave }) {
           </button>
         </div>
 
-        <form key={isOpen ? "open" : "closed"} onSubmit={handleSubmit}>
+        <form
+          key={isOpen ? `${user?.id || "profile"}-open` : "closed"}
+          onSubmit={handleSubmit}
+        >
           <div className="space-y-4">
-            <Input
-              label="Full Name"
-              name="name"
-              defaultValue={user?.name || ""}
-            />
-            <Input
-              label="Handle"
-              name="handle"
-              defaultValue={user?.handle || ""}
-            />
-            <Input
-              label="Department"
-              name="dept"
-              defaultValue={user?.dept || ""}
-            />
-            <Input
-              label="Bio"
-              name="bio"
-              defaultValue={user?.bio || ""}
-              multiline
-            />
-            <Input
-              label="GitHub URL"
-              name="git"
-              type="url"
-              defaultValue={user?.git || ""}
-            />
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-slate-500">
+                Full Name
+              </label>
+              <input
+                name="name"
+                type="text"
+                defaultValue={user?.name || ""}
+                className={inputBase}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-slate-500">
+                Department
+              </label>
+              <input
+                name="dept"
+                type="text"
+                defaultValue={user?.dept || ""}
+                className={inputBase}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-slate-500">
+                Bio
+              </label>
+              <textarea
+                name="bio"
+                rows="3"
+                defaultValue={user?.bio || ""}
+                className={`${inputBase} resize-none`}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-slate-500">
+                GitHub URL
+              </label>
+              <input
+                name="git"
+                type="url"
+                defaultValue={user?.git || ""}
+                className={inputBase}
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-slate-500">
+                Avatar URL
+              </label>
+              <input
+                name="avatarUrl"
+                type="text"
+                defaultValue={user?.avatarUrl || ""}
+                placeholder="https://example.com/avatar.png or /uploads/avatars/..."
+                className={inputBase}
+              />
+            </div>
           </div>
 
           <div className="mt-6 flex gap-3">

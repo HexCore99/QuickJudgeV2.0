@@ -1,21 +1,16 @@
-import { BarChart3, Code, Activity, Flag } from "lucide-react";
+import { BarChart3, Code, Flag, Settings } from "lucide-react";
 
 const tabs = [
   { id: "overview", icon: BarChart3, label: "Overview" },
   { id: "submissions", icon: Code, label: "Submissions" },
-  { id: "activity", icon: Activity, label: "Activity" },
   { id: "contests", icon: Flag, label: "Contests", badge: null },
+  { id: "settings", icon: Settings, label: "Settings" },
 ];
 
-export default function ProfileTabs({
-  activeTab,
-  onTabChange,
-  contestCount,
-}) {
-
+export default function ProfileTabs({ activeTab, onTabChange, contestCount }) {
   return (
     <div className="mb-6 overflow-x-auto pb-1">
-      <div className="flex gap-1 rounded-[14px] border border-black/7 bg-slate-100 p-1 w-max">
+      <div className="flex w-max gap-1 rounded-[14px] border border-black/7 bg-slate-100 p-1">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -32,7 +27,7 @@ export default function ProfileTabs({
                   : "border-transparent bg-transparent text-slate-500 hover:bg-slate-200/60 hover:text-slate-700"
               }`}
             >
-              <Icon className="h-3.25 w-3.25" />
+              <Icon className="h-[13px] w-[13px]" />
               <span className="hidden sm:inline">{tab.label}</span>
               {badge && (
                 <span

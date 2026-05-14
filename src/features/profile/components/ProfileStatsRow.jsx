@@ -35,41 +35,40 @@ const statItems = [
 
 export default function ProfileStatsRow({ user }) {
   return (
-    <div className="mt-6 flex flex-1 items-center border-t border-black/5 pt-5">
-      <div className="grid w-full grid-cols-4 justify-center gap-3">
-        {statItems.map((item) => {
-          const StatIcon = item.Icon;
+    <div className="grid grid-cols-2 gap-3">
+      {statItems.map((item) => {
+        const StatIcon = item.Icon;
+        const value = user[item.key] ?? "--";
+        const shouldShowPrefix = item.prefix && value !== "--";
 
-          return (
-            <div
-              key={item.label}
-              className="group relative overflow-hidden rounded-xl bg-slate-50/80 p-3.5"
-            >
-              {/* Hover accent line */}
-              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-600 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
-              <div className="mb-2 flex items-center gap-2">
-                <div
-                  className={`flex h-7 w-7 items-center justify-center rounded-lg ${item.iconBg}`}
-                >
-                  <StatIcon className={`h-3 w-3 ${item.iconColor}`} />
-                </div>
-                <span className="text-[10px] font-medium text-slate-400">
-                  {item.label}
-                </span>
+        return (
+          <div
+            key={item.label}
+            className="group relative overflow-hidden rounded-xl bg-slate-50/80 p-3.5"
+          >
+            <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-amber-600 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+            <div className="mb-2 flex items-center gap-2">
+              <div
+                className={`flex h-7 w-7 items-center justify-center rounded-lg ${item.iconBg}`}
+              >
+                <StatIcon className={`h-3 w-3 ${item.iconColor}`} />
               </div>
-              <div className="font-mono text-lg font-bold text-slate-800">
-                {item.prefix}
-                {user[item.key]}
-                {item.suffix && (
-                  <span className="ml-1 text-[11px] font-normal text-slate-400">
-                    {item.suffix}
-                  </span>
-                )}
-              </div>
+              <span className="text-[10px] font-medium text-slate-400">
+                {item.label}
+              </span>
             </div>
-          );
-        })}
-      </div>
+            <div className="font-mono text-lg font-bold text-slate-800">
+              {shouldShowPrefix && item.prefix}
+              {value}
+              {item.suffix && (
+                <span className="ml-1 text-[11px] font-normal text-slate-400">
+                  {item.suffix}
+                </span>
+              )}
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }

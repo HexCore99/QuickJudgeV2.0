@@ -28,7 +28,7 @@ export default function ProfileInfo({
       <div className="mb-5 grid gap-2 text-xs text-slate-500">
         <span className="flex items-center gap-1.5">
           <GraduationCap className="h-3.5 w-3.5 text-amber-600" />
-          {user.dept}
+          {user.dept || "Department not set"}
         </span>
         <span className="flex items-center gap-1.5">
           <IdCard className="h-3.5 w-3.5 text-amber-600" />
@@ -36,7 +36,7 @@ export default function ProfileInfo({
         </span>
         <span className="flex items-center gap-1.5">
           <CalendarDays className="h-3.5 w-3.5 text-amber-600" />
-          Registered: {user.joinedDate}
+          Registered: {user.joinedDate || "--"}
         </span>
         <span className="flex items-center gap-1.5">
           <CalendarDays className="h-3.5 w-3.5 text-amber-600" />
@@ -46,6 +46,7 @@ export default function ProfileInfo({
 
       <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-start">
         <button
+          type="button"
           onClick={onEditClick}
           className="rounded-xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-amber-700"
         >
@@ -53,21 +54,24 @@ export default function ProfileInfo({
           Edit Profile
         </button>
         <button
+          type="button"
           onClick={onShareClick}
           className="rounded-xl border border-black/7 px-4 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50"
         >
           <Share2 className="mr-1.5 inline h-3.5 w-3.5" />
           Share
         </button>
-        <a
-          href={user.git}
-          target="_blank"
-          rel="noreferrer"
-          className="flex items-center rounded-xl border border-black/7 px-4 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50"
-        >
-          <Github className="mr-1.5 h-3.5 w-3.5" />
-          GitHub
-        </a>
+        {user.git && (
+          <a
+            href={user.git}
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center rounded-xl border border-black/7 px-4 py-2 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-50"
+          >
+            <Github className="mr-1.5 h-3.5 w-3.5" />
+            GitHub
+          </a>
+        )}
       </div>
     </div>
   );

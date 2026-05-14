@@ -1,7 +1,13 @@
-import { Outlet } from "react-router-dom";
+import { Outlet, Navigate } from "react-router-dom";
 import StudentSidebar from "./StudentSidebar";
 
 function StudentLayout() {
+  const userString = localStorage.getItem("qj_user");
+  const user = userString ? JSON.parse(userString) : null;
+
+  if (!user) return <Navigate to="/login" replace />;
+  if (user.role !== "student") return <Navigate to="/admin/dashboard" replace />;
+
   return (
     <>
       <div className="flex overflow-hidden bg-slate-100">
