@@ -1,4 +1,4 @@
-import { Check, X, TrendingUp, Flag, Flame, Trophy, Send } from "lucide-react";
+import { Check, X, TrendingUp, Flag, Flame, Trophy } from "lucide-react";
 
 const typeMap = {
   solve: {
@@ -45,11 +45,19 @@ export default function ActivityPanel({
   activities,
   submissions,
   onOpenSubmission,
+  title = "Activity Feed",
+  emptyMessage = "No activity yet.",
 }) {
   return (
     <section className="rounded-2xl border border-black/7 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-      <h2 className="mb-6 font-semibold text-slate-800">Activity Feed</h2>
+      <h2 className="mb-6 font-semibold text-slate-800">{title}</h2>
       <div>
+        {activities.length === 0 && (
+          <div className="rounded-xl border border-black/7 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+            {emptyMessage}
+          </div>
+        )}
+
         {activities.map((a, i) => {
           const t = typeMap[a.type] || typeMap.solve;
           const Icon = t.Icon;
@@ -74,7 +82,7 @@ export default function ActivityPanel({
           } else if (a.type === "rating") {
             content = (
               <>
-                <strong className="text-amber-600">{a.title}</strong>
+                <strong className="text-amber-600">{a.title}</strong>{" "}
                 <span className="inline-flex items-center gap-1 font-mono text-[11px] font-semibold text-green-600">
                   ({a.change})
                 </span>
@@ -83,11 +91,9 @@ export default function ActivityPanel({
           } else if (a.type === "contest") {
             content = (
               <>
-                <div className="flex gap-2">
-                  Participated in
-                  <strong className="text-slate-800">{a.title}</strong> —
-                  <span className="text-blue-600">{a.result}</span>
-                </div>
+                Participated in{" "}
+                <strong className="text-slate-800">{a.title}</strong> —{" "}
+                <span className="text-blue-600">{a.result}</span>
               </>
             );
           } else if (a.type === "streak") {

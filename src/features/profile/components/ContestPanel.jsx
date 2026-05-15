@@ -93,19 +93,23 @@ export default function ContestsPanel({ contests, onToast }) {
 
         {/* Summary stats */}
         <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          {summaryCards.map(({ l, v, Icon, co, bg }) => (
+          {summaryCards.map((card) => (
             <div
-              key={l}
+              key={card.l}
               className="rounded-xl border border-black/7 bg-slate-50 p-3"
             >
               <div className="mb-1.5 flex items-center gap-2">
-                <Icon className={`h-2.5 w-2.5 ${co}`} />
+                <span
+                  className={`flex h-5 w-5 items-center justify-center rounded-md ${card.bg}`}
+                >
+                  <card.Icon className={`h-2.5 w-2.5 ${card.co}`} />
+                </span>
                 <span className="text-[10px] font-medium uppercase tracking-wider text-slate-500">
-                  {l}
+                  {card.l}
                 </span>
               </div>
               <div className="font-mono text-lg font-bold text-slate-800">
-                {v}
+                {card.v}
               </div>
             </div>
           ))}

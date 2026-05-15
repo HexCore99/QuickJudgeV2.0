@@ -44,7 +44,7 @@ function SignupPage() {
   useEffect(() => {
     if (!isAuthenticated) return;
 
-    if (role === "admin") {
+    if (["admin", "super_admin"].includes(role)) {
       navigate("/admin", { replace: true });
       return;
     }

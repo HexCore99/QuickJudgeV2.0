@@ -15,7 +15,7 @@ function getContestTypeClasses(type) {
 function PastContestRow({ contest }) {
   return (
     <Link
-      to={`/student/${contest.id}/problems`}
+      to={`/student/contests/${contest.id}/problems`}
       className="group grid gap-3 border-b border-slate-100 px-5 py-4 transition hover:bg-slate-50 md:grid-cols-[2.2fr_1.4fr_0.8fr_0.8fr] md:items-center"
     >
       {/* contest*/}

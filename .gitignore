@@ -28,6 +28,9 @@ IGNORE
 xyz.html
 *.py
 
+!backend_flask/**/*.py
+!backend_flask/requirements.txt
+
 
 __pycache__/
 *.py[cod]

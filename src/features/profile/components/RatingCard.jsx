@@ -1,4 +1,4 @@
-export default function RatingCard({ rating }) {
+export default function RatingCard({ rating, ratingTier }) {
   return (
     <div className="relative shrink-0 overflow-hidden rounded-2xl border border-amber-200 bg-amber-50/60 px-6 py-5 text-center shadow-sm">
       <div className="text-[10px] font-semibold tracking-wider text-slate-500">
@@ -7,6 +7,11 @@ export default function RatingCard({ rating }) {
       <div className="mt-1 font-mono text-3xl font-bold text-amber-700">
         {rating}
       </div>
+      {ratingTier && (
+        <div className="mt-1.5 text-[9px] font-medium tracking-wider text-amber-600">
+          {ratingTier}
+        </div>
+      )}
     </div>
   );
 }

@@ -1,14 +1,18 @@
 import { createSlice } from "@reduxjs/toolkit";
 import {
-  fetchContestAnnouncements,
   fetchContestDetails,
-  fetchContestLeaderboard,
-  fetchContestQueries,
-  fetchContestSubmissions,
   fetchContests,
   registerUpcomingContest,
-  submitQuery,
   verifyContestPassword,
+  fetchContestSubmissions,
+  fetchContestLeaderboard,
+  fetchContestAnnouncements,
+  createContestAnnouncement,
+  updateContestAnnouncement,
+  deleteContestAnnouncement,
+  fetchContestQueries,
+  submitQuery,
+  replyContestQuery,
 } from "./contestsThunks";
 
 const initialState = {
@@ -34,13 +38,13 @@ const initialState = {
     error: null,
   },
 
-  leaderboard: {
-    data: null,
+  submissions: {
+    data: [],
     isLoading: false,
     error: null,
   },
 
-  submissions: {
+  leaderboard: {
     data: [],
     isLoading: false,
     error: null,
@@ -50,6 +54,8 @@ const initialState = {
     data: [],
     isLoading: false,
     error: null,
+    isSaving: false,
+    saveError: null,
   },
 
   queries: {
@@ -58,6 +64,8 @@ const initialState = {
     error: null,
     isSubmitting: false,
     submitError: null,
+    replyingId: null,
+    replyError: null,
   },
 };
 
@@ -94,20 +102,26 @@ const contestsSlice = createSlice({
       state.contestDetails.data = null;
       state.contestDetails.isLoading = false;
       state.contestDetails.error = null;
-      state.leaderboard.data = null;
-      state.leaderboard.isLoading = false;
-      state.leaderboard.error = null;
+    },
+
+    clearSubmissions(state) {
       state.submissions.data = [];
       state.submissions.isLoading = false;
       state.submissions.error = null;
+    },
+
+    clearLeaderboard(state) {
+      state.leaderboard.data = [];
+      state.leaderboard.isLoading = false;
+      state.leaderboard.error = null;
+    },
+
+    clearAnnouncements(state) {
       state.announcements.data = [];
       state.announcements.isLoading = false;
       state.announcements.error = null;
-      state.queries.data = [];
-      state.queries.isLoading = false;
-      state.queries.error = null;
-      state.queries.isSubmitting = false;
-      state.queries.submitError = null;
+      state.announcements.isSaving = false;
+      state.announcements.saveError = null;
     },
 
     clearQueries(state) {
@@ -116,6 +130,8 @@ const contestsSlice = createSlice({
       state.queries.error = null;
       state.queries.isSubmitting = false;
       state.queries.submitError = null;
+      state.queries.replyingId = null;
+      state.queries.replyError = null;
     },
   },
 
@@ -183,6 +199,20 @@ const contestsSlice = createSlice({
           action.payload || "Failed to fetch contest details.";
       })
 
+      .addCase(fetchContestSubmissions.pending, (state) => {
+        state.submissions.isLoading = true;
+        state.submissions.error = null;
+      })
+      .addCase(fetchContestSubmissions.fulfilled, (state, action) => {
+        state.submissions.isLoading = false;
+        state.submissions.data = action.payload;
+      })
+      .addCase(fetchContestSubmissions.rejected, (state, action) => {
+        state.submissions.isLoading = false;
+        state.submissions.error =
+          action.payload || "Failed to fetch submissions.";
+      })
+
       .addCase(fetchContestLeaderboard.pending, (state) => {
         state.leaderboard.isLoading = true;
         state.leaderboard.error = null;
@@ -197,32 +227,66 @@ const contestsSlice = createSlice({
           action.payload || "Failed to fetch leaderboard.";
       })
 
-      .addCase(fetchContestSubmissions.pending, (state) => {
-        state.submissions.isLoading = true;
-        state.submissions.error = null;
-      })
-      .addCase(fetchContestSubmissions.fulfilled, (state, action) => {
-        state.submissions.isLoading = false;
-        state.submissions.data = action.payload || [];
-      })
-      .addCase(fetchContestSubmissions.rejected, (state, action) => {
-        state.submissions.isLoading = false;
-        state.submissions.error =
-          action.payload || "Failed to fetch contest submissions.";
-      })
-
       .addCase(fetchContestAnnouncements.pending, (state) => {
         state.announcements.isLoading = true;
         state.announcements.error = null;
       })
       .addCase(fetchContestAnnouncements.fulfilled, (state, action) => {
         state.announcements.isLoading = false;
-        state.announcements.data = action.payload || [];
+        state.announcements.data = action.payload;
       })
       .addCase(fetchContestAnnouncements.rejected, (state, action) => {
         state.announcements.isLoading = false;
         state.announcements.error =
-          action.payload || "Failed to fetch contest announcements.";
+          action.payload || "Failed to fetch announcements.";
+      })
+
+      .addCase(createContestAnnouncement.pending, (state) => {
+        state.announcements.isSaving = true;
+        state.announcements.saveError = null;
+      })
+      .addCase(createContestAnnouncement.fulfilled, (state, action) => {
+        state.announcements.isSaving = false;
+        state.announcements.data.unshift(action.payload);
+      })
+      .addCase(createContestAnnouncement.rejected, (state, action) => {
+        state.announcements.isSaving = false;
+        state.announcements.saveError =
+          action.payload || "Failed to create announcement.";
+      })
+      .addCase(updateContestAnnouncement.pending, (state) => {
+        state.announcements.isSaving = true;
+        state.announcements.saveError = null;
+      })
+      .addCase(updateContestAnnouncement.fulfilled, (state, action) => {
+        state.announcements.isSaving = false;
+        const index = state.announcements.data.findIndex(
+          (item) => item.id === action.payload.id,
+        );
+
+        if (index !== -1) {
+          state.announcements.data[index] = action.payload;
+        }
+      })
+      .addCase(updateContestAnnouncement.rejected, (state, action) => {
+        state.announcements.isSaving = false;
+        state.announcements.saveError =
+          action.payload || "Failed to update announcement.";
+      })
+      .addCase(deleteContestAnnouncement.pending, (state) => {
+        state.announcements.isSaving = true;
+        state.announcements.saveError = null;
+      })
+      .addCase(deleteContestAnnouncement.fulfilled, (state, action) => {
+        state.announcements.isSaving = false;
+        state.announcements.data = state.announcements.data.filter(
+          (item) => item.id !== action.payload.id,
+        );
+      })
+      .addCase(deleteContestAnnouncement.rejected, (state, action) => {
+        state.announcements.isSaving = false;
+        state.announcements.saveError =
+          action.payload || "Failed to delete announcement.";
       })
 
       .addCase(fetchContestQueries.pending, (state) => {
@@ -231,12 +295,11 @@ const contestsSlice = createSlice({
       })
       .addCase(fetchContestQueries.fulfilled, (state, action) => {
         state.queries.isLoading = false;
-        state.queries.data = action.payload || [];
+        state.queries.data = action.payload;
       })
       .addCase(fetchContestQueries.rejected, (state, action) => {
         state.queries.isLoading = false;
-        state.queries.error =
-          action.payload || "Failed to fetch contest queries.";
+        state.queries.error = action.payload || "Failed to fetch queries.";
       })
 
       .addCase(submitQuery.pending, (state) => {
@@ -245,12 +308,30 @@ const contestsSlice = createSlice({
       })
       .addCase(submitQuery.fulfilled, (state, action) => {
         state.queries.isSubmitting = false;
-        state.queries.data = [action.payload, ...state.queries.data];
+        state.queries.data.unshift(action.payload);
       })
       .addCase(submitQuery.rejected, (state, action) => {
         state.queries.isSubmitting = false;
-        state.queries.submitError =
-          action.payload || "Failed to submit your question.";
+        state.queries.submitError = action.payload || "Failed to submit query.";
+      })
+      .addCase(replyContestQuery.pending, (state, action) => {
+        state.queries.replyingId = action.meta.arg.queryId;
+        state.queries.replyError = null;
+      })
+      .addCase(replyContestQuery.fulfilled, (state, action) => {
+        state.queries.replyingId = null;
+        const index = state.queries.data.findIndex(
+          (item) => item.id === action.payload.id,
+        );
+
+        if (index !== -1) {
+          state.queries.data[index] = action.payload;
+        }
+      })
+      .addCase(replyContestQuery.rejected, (state, action) => {
+        state.queries.replyingId = null;
+        state.queries.replyError =
+          action.payload || "Failed to reply to query.";
       });
   },
 });
@@ -261,6 +342,9 @@ export const {
   setContestPasswordInput,
   clearContestPasswordError,
   clearContestDetails,
+  clearSubmissions,
+  clearLeaderboard,
+  clearAnnouncements,
   clearQueries,
 } = contestsSlice.actions;
 

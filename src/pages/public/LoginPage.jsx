@@ -36,7 +36,7 @@ function LoginPage() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    if (role === "admin") {
+    if (["admin", "super_admin"].includes(role)) {
       navigate("/admin", { replace: true });
       return;
     }
@@ -79,6 +79,15 @@ function LoginPage() {
               placeholder="Enter you password"
               autocomplete="email"
             />
+
+            <div className="text-right">
+              <Link
+                to="/forgot-password"
+                className="text-sm font-semibold text-slate-900 hover:text-slate-700"
+              >
+                Forgot password?
+              </Link>
+            </div>
 
             {error ? (
               <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

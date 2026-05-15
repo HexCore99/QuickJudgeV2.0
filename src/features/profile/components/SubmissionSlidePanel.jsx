@@ -1,5 +1,7 @@
-import Editor from "@monaco-editor/react";
+import { lazy, Suspense } from "react";
 import { X, Copy } from "lucide-react";
+
+const Editor = lazy(() => import("@monaco-editor/react"));
 
 const verdictLabels = {
   AC: "Accepted",
@@ -7,6 +9,8 @@ const verdictLabels = {
   TLE: "Time Limit Exceeded",
   RE: "Runtime Error",
   CE: "Compilation Error",
+  MLE: "Memory Limit Exceeded",
+  PE: "Presentation Error",
 };
 
 const diffColors = {
@@ -24,6 +28,11 @@ const verdictBg = {
 };
 
 const languageMap = {
+  c: "c",
+  cpp: "cpp",
+  java: "java",
+  python: "python",
+  rust: "rust",
   "C++": "cpp",
   Python: "python",
   Java: "java",
@@ -43,19 +52,38 @@ export default function SubmissionSlidePanel({
 
   function handleCopy() {
     if (!s) return;
+
+    if (!s.code) {
+      onToast?.("No code available", "error");
+      return;
+    }
+
     navigator.clipboard
       .writeText(s.code)
-      .then(() => onToast("Code copied", "success"))
-      .catch(() => onToast("Failed to copy", "error"));
+      .then(() => onToast?.("Code copied", "success"))
+      .catch(() => onToast?.("Failed to copy", "error"));
   }
 
   const rows = s
     ? [
-        { label: "Difficulty", value: s.diff, cls: diffColors[s.diff] },
-        { label: "Language", value: s.lang, mono: true },
-        { label: "Execution Time", value: s.time, mono: true },
-        { label: "Memory Used", value: s.mem, mono: true },
-        { label: "Submitted", value: s.at, mono: true },
+        ...(s.participant
+          ? [{ label: "Participant", value: s.participant }]
+          : []),
+        ...(s.diff
+          ? [{ label: "Difficulty", value: s.diff, cls: diffColors[s.diff] }]
+          : []),
+        { label: "Language", value: s.lang || "--", mono: true },
+        ...(s.time
+          ? [
+              {
+                label: s.timeLabel || "Execution Time",
+                value: s.time,
+                mono: true,
+              },
+            ]
+          : []),
+        ...(s.mem ? [{ label: "Memory Used", value: s.mem, mono: true }] : []),
+        ...(s.at ? [{ label: "Submitted", value: s.at, mono: true }] : []),
         ...(s.contest
           ? [{ label: "Contest", value: s.contest, cls: "text-amber-600" }]
           : []),
@@ -145,7 +173,7 @@ export default function SubmissionSlidePanel({
                 Test Cases
               </h5>
               <div className="rounded-xl border border-black/7 bg-slate-50 p-4 font-mono text-xs leading-relaxed whitespace-pre-wrap text-slate-500">
-                {s.tc}
+                {s.tc || "No test-case details available."}
               </div>
             </div>
 
@@ -164,23 +192,34 @@ export default function SubmissionSlidePanel({
                 </button>
               </div>
               <div className="overflow-hidden rounded-xl border border-white/6 bg-slate-800">
-                <Editor
-                  height="500px"
-                  language={getEditorLanguage(s.lang)}
-                  value={s.code}
-                  theme="vs-dark"
-                  options={{
-                    readOnly: true,
-                    domReadOnly: true,
-                    minimap: { enabled: false },
-                    scrollBeyondLastLine: false,
-                    fontSize: 13,
-                    fontFamily: "Consolas, 'Courier New', monospace",
-                    lineNumbers: "on",
-                    wordWrap: "off",
-                    automaticLayout: true,
-                  }}
-                />
+                <Suspense
+                  fallback={
+                    <div className="flex h-[500px] items-center justify-center text-sm text-slate-400">
+                      Loading editor...
+                    </div>
+                  }
+                >
+                  <Editor
+                    height="500px"
+                    language={getEditorLanguage(s.lang)}
+                    value={
+                      s.code ||
+                      "Source code is not available for this submission."
+                    }
+                    theme="vs-dark"
+                    options={{
+                      readOnly: true,
+                      domReadOnly: true,
+                      minimap: { enabled: false },
+                      scrollBeyondLastLine: false,
+                      fontSize: 13,
+                      fontFamily: "Consolas, 'Courier New', monospace",
+                      lineNumbers: "on",
+                      wordWrap: "off",
+                      automaticLayout: true,
+                    }}
+                  />
+                </Suspense>
               </div>
             </div>
           </div>

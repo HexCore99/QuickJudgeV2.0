@@ -1,30 +1,130 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getProblemBankApi } from "../../problems/problemsApi";
 
-export default function ProblemBreakdown({ difficulties }) {
+const DIFFICULTY_META = {
+  Easy: { color: "#16a34a", tw: "bg-green-600" },
+  Medium: { color: "#d97706", tw: "bg-amber-500" },
+  Hard: { color: "#dc2626", tw: "bg-red-600" },
+};
+
+function normalizeDifficulty(value) {
+  const normalized = String(value || "Medium")
+    .trim()
+    .toLowerCase();
+
+  if (normalized === "easy") return "Easy";
+  if (normalized === "hard") return "Hard";
+  return "Medium";
+}
+
+function hasAnyBreakdownTotal(difficulties) {
+  return difficulties.some((difficulty) => Number(difficulty.total) > 0);
+}
+
+function buildPublicProblemBreakdown(publicProblems, submissions) {
+  const solvedPublicProblemIds = new Set(
+    submissions
+      .filter(
+        (submission) =>
+          submission.verdict === "AC" && submission.isScored !== false,
+      )
+      .map((submission) => Number(submission.problemId))
+      .filter((problemId) => Number.isInteger(problemId) && problemId > 0),
+  );
+
+  const rowsByDifficulty = ["Easy", "Medium", "Hard"].reduce(
+    (acc, difficulty) => {
+      acc[difficulty] = {
+        label: difficulty,
+        ...DIFFICULTY_META[difficulty],
+        solved: 0,
+        total: 0,
+      };
+      return acc;
+    },
+    {},
+  );
+
+  publicProblems.forEach((problem) => {
+    const difficulty = normalizeDifficulty(problem.difficulty);
+    const problemId = Number(problem.id);
+
+    rowsByDifficulty[difficulty].total += 1;
+
+    if (
+      Number.isInteger(problemId) &&
+      solvedPublicProblemIds.has(problemId)
+    ) {
+      rowsByDifficulty[difficulty].solved += 1;
+    }
+  });
+
+  return ["Easy", "Medium", "Hard"].map(
+    (difficulty) => rowsByDifficulty[difficulty],
+  );
+}
+
+export default function ProblemBreakdown({ difficulties = [], submissions = [] }) {
   const barRefs = useRef([]);
+  const [publicProblems, setPublicProblems] = useState(null);
+  const needsPublicProblemFallback = !hasAnyBreakdownTotal(difficulties);
+
+  useEffect(() => {
+    if (!needsPublicProblemFallback) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    getProblemBankApi()
+      .then((problems) => {
+        if (isMounted) {
+          setPublicProblems(Array.isArray(problems) ? problems : []);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setPublicProblems([]);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [needsPublicProblemFallback]);
+
+  const displayDifficulties = useMemo(() => {
+    if (needsPublicProblemFallback && publicProblems) {
+      return buildPublicProblemBreakdown(publicProblems, submissions);
+    }
+
+    return difficulties;
+  }, [difficulties, needsPublicProblemFallback, publicProblems, submissions]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
       barRefs.current.forEach((bar) => {
         if (bar) {
           const targetWidth = bar.getAttribute("data-w");
-          bar.style.width = targetWidth + "%";
+          bar.style.width = `${targetWidth}%`;
         }
       });
     }, 300);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [displayDifficulties]);
 
   return (
-    <div className="rounded-2xl border border-black/7 bg-white p-6 shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
-      <h2 className="mb-5 font-semibold text-slate-800">Problem Breakdown</h2>
+    <div>
+      <h2 className="mb-4 text-[11px] font-medium tracking-wider text-slate-400 uppercase">
+        Problem Breakdown
+      </h2>
       <div className="space-y-4">
-        {difficulties.map((difficulty, index) => {
-          const pct = Math.max(
-            Math.round((difficulty.solved / difficulty.total) * 100),
-            2,
-          );
+        {displayDifficulties.map((difficulty, index) => {
+          const total = Number(difficulty.total) || 0;
+          const solved = Number(difficulty.solved) || 0;
+          const pct =
+            total > 0 ? Math.max(Math.round((solved / total) * 100), 2) : 0;
 
           return (
             <div key={difficulty.label}>
@@ -40,12 +140,14 @@ export default function ProblemBreakdown({ difficulties }) {
                   {difficulty.label}
                 </span>
                 <span className="font-mono text-xs text-slate-500">
-                  {difficulty.solved} / {difficulty.total}
+                  {solved} / {total}
                 </span>
               </div>
               <div className="h-2 overflow-hidden rounded-full bg-slate-100">
                 <div
-                  ref={(el) => (barRefs.current[index] = el)}
+                  ref={(el) => {
+                    barRefs.current[index] = el;
+                  }}
                   data-w={pct}
                   className="h-full rounded-full transition-all duration-1000"
                   style={{

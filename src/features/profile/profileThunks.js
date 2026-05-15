@@ -1,5 +1,5 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
-import { getProfileApi, updateProfileApi } from "./profileAPI";
+import { getProfileApi, updateProfileApi } from "./profileApi";
 
 export const fetchProfile = createAsyncThunk(
   "profile/fetchProfile",
