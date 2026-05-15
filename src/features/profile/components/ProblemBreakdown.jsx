@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef } from "react";
-import { PROBLEM_BANK_ITEMS } from "../../problems/problemBankMockData";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { getProblemBankApi } from "../../problems/problemsApi";
 
 const DIFFICULTY_META = {
   Easy: { color: "#16a34a", tw: "bg-green-600" },
@@ -66,15 +66,40 @@ function buildPublicProblemBreakdown(publicProblems, submissions) {
 
 export default function ProblemBreakdown({ difficulties = [], submissions = [] }) {
   const barRefs = useRef([]);
+  const [publicProblems, setPublicProblems] = useState(null);
   const needsPublicProblemFallback = !hasAnyBreakdownTotal(difficulties);
 
+  useEffect(() => {
+    if (!needsPublicProblemFallback) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    getProblemBankApi()
+      .then((problems) => {
+        if (isMounted) {
+          setPublicProblems(Array.isArray(problems) ? problems : []);
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setPublicProblems([]);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [needsPublicProblemFallback]);
+
   const displayDifficulties = useMemo(() => {
-    if (needsPublicProblemFallback) {
-      return buildPublicProblemBreakdown(PROBLEM_BANK_ITEMS, submissions);
+    if (needsPublicProblemFallback && publicProblems) {
+      return buildPublicProblemBreakdown(publicProblems, submissions);
     }
 
     return difficulties;
-  }, [difficulties, needsPublicProblemFallback, submissions]);
+  }, [difficulties, needsPublicProblemFallback, publicProblems, submissions]);
 
   useEffect(() => {
     const timer = setTimeout(() => {

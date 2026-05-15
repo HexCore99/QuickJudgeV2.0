@@ -15,6 +15,7 @@ from services.user_handle_service import (
     insert_user_with_unique_handle,
 )
 from services.user_session_service import ensure_user_session_schema
+from services.audit_log_service import record_audit_log_for_request
 from utils.mailer import send_password_reset_email
 
 PASSWORD_RESET_SUCCESS_MESSAGE = (
@@ -123,6 +124,19 @@ def signup():
 
     try:
         if not name or not email or not password:
+            record_audit_log_for_request(
+                request,
+                {
+                    "actor_email": email or None,
+                    "actor_role": "student",
+                    "action": "CREATE_ACCOUNT",
+                    "target_type": "user",
+                    "target_email": email or None,
+                    "target_label": name or email or "Signup attempt",
+                    "status": "failed",
+                    "message": "Name, email and password are required",
+                },
+            )
             return jsonify(
                 {
                     "success": False,
@@ -131,6 +145,19 @@ def signup():
             ), 400
 
         if not isinstance(password, str) or len(password) < 6:
+            record_audit_log_for_request(
+                request,
+                {
+                    "actor_email": email,
+                    "actor_role": "student",
+                    "action": "CREATE_ACCOUNT",
+                    "target_type": "user",
+                    "target_email": email,
+                    "target_label": name,
+                    "status": "failed",
+                    "message": "Password must be at least 6 characters",
+                },
+            )
             return jsonify(
                 {
                     "success": False,
@@ -147,6 +174,19 @@ def signup():
         )
 
         if existing_user:
+            record_audit_log_for_request(
+                request,
+                {
+                    "actor_email": email,
+                    "actor_role": "student",
+                    "action": "CREATE_ACCOUNT",
+                    "target_type": "user",
+                    "target_email": email,
+                    "target_label": name,
+                    "status": "failed",
+                    "message": "Email already exists",
+                },
+            )
             return jsonify(
                 {
                     "success": False,
@@ -203,6 +243,23 @@ def signup():
         }
         token = create_token(user, session_id)
 
+        record_audit_log_for_request(
+            request,
+            {
+                "actor_user_id": user["id"],
+                "actor_email": user["email"],
+                "actor_role": user["role"],
+                "action": "CREATE_ACCOUNT",
+                "target_type": "user",
+                "target_id": user["id"],
+                "target_user_id": user["id"],
+                "target_email": user["email"],
+                "target_label": user["handle"] or user["name"],
+                "status": "success",
+                "message": "Student account created",
+            },
+        )
+
         return jsonify(
             {
                 "success": True,
@@ -211,8 +268,21 @@ def signup():
                 "token": token,
             },
         ), 201
-    except Exception:
+    except Exception as error:
         current_app.logger.exception("Signup error")
+        record_audit_log_for_request(
+            request,
+            {
+                "actor_email": email or None,
+                "actor_role": "student",
+                "action": "CREATE_ACCOUNT",
+                "target_type": "user",
+                "target_email": email or None,
+                "target_label": name or email or "Signup attempt",
+                "status": "failed",
+                "message": str(error) or "Signup failed",
+            },
+        )
         return jsonify(
             {
                 "success": False,
@@ -232,6 +302,18 @@ def login():
 
     try:
         if not email or not password:
+            record_audit_log_for_request(
+                request,
+                {
+                    "actor_email": email or None,
+                    "action": "LOGIN",
+                    "target_type": "user",
+                    "target_email": email or None,
+                    "target_label": email or "Login attempt",
+                    "status": "failed",
+                    "message": "Email and password are required",
+                },
+            )
             return jsonify(
                 {
                     "success": False,
@@ -254,6 +336,18 @@ def login():
         )
 
         if not found_user:
+            record_audit_log_for_request(
+                request,
+                {
+                    "actor_email": email,
+                    "action": "LOGIN",
+                    "target_type": "user",
+                    "target_email": email,
+                    "target_label": email,
+                    "status": "failed",
+                    "message": "Invalid email or password",
+                },
+            )
             return jsonify(
                 {
                     "success": False,
@@ -272,6 +366,24 @@ def login():
             is_password_matched = False
 
         if not is_password_matched:
+            record_audit_log_for_request(
+                request,
+                {
+                    "actor_user_id": found_user["id"],
+                    "actor_email": found_user["email"],
+                    "actor_role": found_user["role"],
+                    "action": "LOGIN",
+                    "target_type": "user",
+                    "target_id": found_user["id"],
+                    "target_user_id": found_user["id"],
+                    "target_email": found_user["email"],
+                    "target_label": (
+                        found_user.get("userhandle") or found_user["name"]
+                    ),
+                    "status": "failed",
+                    "message": "Invalid email or password",
+                },
+            )
             return jsonify(
                 {
                     "success": False,
@@ -280,6 +392,24 @@ def login():
             ), 401
 
         if found_user.get("account_status") == "banned":
+            record_audit_log_for_request(
+                request,
+                {
+                    "actor_user_id": found_user["id"],
+                    "actor_email": found_user["email"],
+                    "actor_role": found_user["role"],
+                    "action": "LOGIN",
+                    "target_type": "user",
+                    "target_id": found_user["id"],
+                    "target_user_id": found_user["id"],
+                    "target_email": found_user["email"],
+                    "target_label": (
+                        found_user.get("userhandle") or found_user["name"]
+                    ),
+                    "status": "failed",
+                    "message": "This account is banned.",
+                },
+            )
             return jsonify(
                 {
                     "success": False,
@@ -288,10 +418,29 @@ def login():
             ), 403
 
         if found_user.get("account_status") == "suspended":
+            suspended_message = get_suspended_login_message(found_user)
+            record_audit_log_for_request(
+                request,
+                {
+                    "actor_user_id": found_user["id"],
+                    "actor_email": found_user["email"],
+                    "actor_role": found_user["role"],
+                    "action": "LOGIN",
+                    "target_type": "user",
+                    "target_id": found_user["id"],
+                    "target_user_id": found_user["id"],
+                    "target_email": found_user["email"],
+                    "target_label": (
+                        found_user.get("userhandle") or found_user["name"]
+                    ),
+                    "status": "failed",
+                    "message": suspended_message,
+                },
+            )
             return jsonify(
                 {
                     "success": False,
-                    "message": get_suspended_login_message(found_user),
+                    "message": suspended_message,
                 },
             ), 403
 
@@ -316,6 +465,23 @@ def login():
 
         token = create_token(user, session_id)
 
+        record_audit_log_for_request(
+            request,
+            {
+                "actor_user_id": user["id"],
+                "actor_email": user["email"],
+                "actor_role": user["role"],
+                "action": "LOGIN",
+                "target_type": "user",
+                "target_id": user["id"],
+                "target_user_id": user["id"],
+                "target_email": user["email"],
+                "target_label": user["handle"] or user["name"],
+                "status": "success",
+                "message": "Login successful",
+            },
+        )
+
         return jsonify(
             {
                 "success": True,
@@ -324,8 +490,20 @@ def login():
                 "token": token,
             },
         ), 200
-    except Exception:
+    except Exception as error:
         current_app.logger.exception("Login error")
+        record_audit_log_for_request(
+            request,
+            {
+                "actor_email": email or None,
+                "action": "LOGIN",
+                "target_type": "user",
+                "target_email": email or None,
+                "target_label": email or "Login attempt",
+                "status": "failed",
+                "message": str(error) or "Login failed",
+            },
+        )
         return jsonify(
             {
                 "success": False,

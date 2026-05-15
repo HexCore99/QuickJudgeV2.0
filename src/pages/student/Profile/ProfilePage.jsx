@@ -1,79 +1,67 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import StudentTopTabs from "../../../components/layout/StudentTopTabs";
-import ProfileHero from "../../../features/profile/components/ProfileHero";
-
-import ProfileTabs from "../../../features/profile/components/ProfileTabs";
-import OverviewPanel from "../../../features/profile/components/OverviewPanel";
-import SubmissionsPanel from "../../../features/profile/components/SubmissionsPanel";
+import { logout, updateAuthUser } from "../../../features/auth/authSlice";
 import ContestsPanel from "../../../features/profile/components/ContestsPanel";
+import OverviewPanel from "../../../features/profile/components/OverviewPanel";
+import ProfileHero from "../../../features/profile/components/ProfileHero";
+import ProfileTabs from "../../../features/profile/components/ProfileTabs";
 import SettingsPanel from "../../../features/profile/components/SettingsPanel";
 import SubmissionSlidePanel from "../../../features/profile/components/SubmissionSlidePanel";
+import SubmissionsPanel from "../../../features/profile/components/SubmissionsPanel";
 import ToastContainer from "../../../features/profile/components/Toast";
-import { logout, updateAuthUser } from "../../../features/auth/authSlice";
 import { uploadProfileAvatarApi } from "../../../features/profile/profileApi";
-import { resetProfile } from "../../../features/profile/profileSlice";
 import {
-  selectProfileData,
+  selectProfileContests,
+  selectProfileDifficulties,
   selectProfileError,
   selectProfileHasFetched,
   selectProfileLoading,
   selectProfileSaveError,
   selectProfileSaving,
+  selectProfileSubmissions,
+  selectProfileUser,
 } from "../../../features/profile/profileSelectors";
 import {
   fetchProfile,
   saveProfile,
 } from "../../../features/profile/profileThunks";
 
+const profileTabs = new Set(["overview", "submissions", "contests", "settings"]);
 let toastIdCounter = 0;
-const PROFILE_TABS = new Set([
-  "overview",
-  "submissions",
-  "contests",
-  "settings",
-]);
 
 function getProfileTab(searchParams) {
   const tab = searchParams.get("tab") || "overview";
 
-  return PROFILE_TABS.has(tab) ? tab : "overview";
+  return profileTabs.has(tab) ? tab : "overview";
 }
 
 export default function ProfilePage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const profileData = useSelector(selectProfileData);
+  const user = useSelector(selectProfileUser);
+  const submissions = useSelector(selectProfileSubmissions);
+  const contests = useSelector(selectProfileContests);
+  const difficulties = useSelector(selectProfileDifficulties);
   const isLoading = useSelector(selectProfileLoading);
   const isSaving = useSelector(selectProfileSaving);
   const hasFetched = useSelector(selectProfileHasFetched);
   const profileError = useSelector(selectProfileError);
   const saveError = useSelector(selectProfileSaveError);
   const authUserId = useSelector((state) => state.auth.user?.id || null);
-  const {
-    profile: user,
-    submissions,
-    contests,
-    difficulties,
-    ratingHistory,
-  } = profileData;
 
   const activeTab = getProfileTab(searchParams);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [slideSubmission, setSlideSubmission] = useState(null);
   const [slideOpen, setSlideOpen] = useState(false);
   const [toasts, setToasts] = useState([]);
-
-  // Reveal animation
-  const revealRefs = useRef([]);
   const hasRequestedProfileRef = useRef(false);
 
   useEffect(() => {
     hasRequestedProfileRef.current = false;
-    dispatch(resetProfile());
-  }, [authUserId, dispatch]);
+  }, [authUserId]);
 
   useEffect(() => {
     if (
@@ -87,49 +75,31 @@ export default function ProfilePage() {
     }
   }, [authUserId, dispatch, hasFetched, isLoading]);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting)
-            e.target.classList.add("opacity-100", "translate-y-0");
-        });
-      },
-      { threshold: 0.08, rootMargin: "0px 0px -40px 0px" },
-    );
-    revealRefs.current.forEach((el) => el && observer.observe(el));
-    return () => observer.disconnect();
-  }, []);
-
-  const addRevealRef = useCallback((el) => {
-    if (el && !revealRefs.current.includes(el)) {
-      revealRefs.current.push(el);
-    }
-  }, []);
-
-  // Toast helpers
   const toast = useCallback((msg, type = "info") => {
     const id = ++toastIdCounter;
     setToasts((prev) => [...prev, { id, msg, type }]);
   }, []);
 
   const removeToast = useCallback((id) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
+    setToasts((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
   const handleTabChange = useCallback(
     (tab) => {
-      if (tab === "overview") {
-        setSearchParams({});
-        return;
-      }
-
-      setSearchParams({ tab });
+      setSearchParams(tab === "overview" ? {} : { tab });
     },
     [setSearchParams],
   );
 
-  // Edit profile
+  async function handleShare() {
+    try {
+      await navigator.clipboard.writeText(window.location.href);
+      toast("Profile link copied", "success");
+    } catch {
+      toast("Failed to copy profile link", "error");
+    }
+  }
+
   async function handleSave(data) {
     try {
       const { avatarImageData, ...profilePayload } = data;
@@ -167,10 +137,9 @@ export default function ProfilePage() {
     }
   }
 
-  // Submission panel
-  function openSubmission(idx) {
-    if (idx >= 0 && idx < submissions.length) {
-      setSlideSubmission(submissions[idx]);
+  function openSubmission(index) {
+    if (index >= 0 && index < submissions.length) {
+      setSlideSubmission(submissions[index]);
       setSlideOpen(true);
     }
   }
@@ -179,20 +148,24 @@ export default function ProfilePage() {
     setSlideOpen(false);
   }
 
-  // Keyboard escape
+  function openProblem(submission) {
+    const problemId = submission.problemId || submission.id;
+    navigate(`/student/problems/${problemId}`);
+  }
+
   useEffect(() => {
-    function handleKey(e) {
-      if (e.key === "Escape") {
+    function handleKey(event) {
+      if (event.key === "Escape") {
         setSlideOpen(false);
       }
     }
+
     document.addEventListener("keydown", handleKey);
     return () => document.removeEventListener("keydown", handleKey);
   }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 font-[Space_Grotesk,sans-serif] text-slate-800">
-      {/* Background layers */}
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(rgba(0,0,0,0.05)_1px,transparent_1px)] bg-[length:24px_24px]" />
       <div className="pointer-events-none fixed inset-0 z-0">
         <div
@@ -211,10 +184,7 @@ export default function ProfilePage() {
         />
       </div>
 
-      {/* Toast container */}
       <ToastContainer toasts={toasts} removeToast={removeToast} />
-
-      {/* Submission slide panel */}
       <SubmissionSlidePanel
         submission={slideSubmission}
         isOpen={slideOpen}
@@ -222,37 +192,23 @@ export default function ProfilePage() {
         onToast={toast}
       />
 
-      {/* Main content */}
       <div className="relative z-[1]">
-        <StudentTopTabs
-          tabs={[
-            { key: "Problems", to: "/student/problems" },
-            { key: "Contests", to: "/student/contests" },
-            { key: "Leaderboard", to: "/student/leaderboard" },
-            { key: "Profile", to: "/student/profile" },
-          ]}
-          logoTo="/"
-        />
+        <StudentTopTabs logoTo="/" />
 
         <main className="mx-auto max-w-7xl px-6 py-8">
-          {isLoading && !hasFetched && (
+          {isLoading && !hasFetched ? (
             <div className="mb-6 rounded-xl border border-amber-600/20 bg-amber-50 px-4 py-3 text-sm text-amber-700">
               Loading profile...
             </div>
-          )}
+          ) : null}
 
-          {(profileError || saveError) && (
+          {profileError || saveError ? (
             <div className="mb-6 rounded-xl border border-red-600/20 bg-red-50 px-4 py-3 text-sm text-red-700">
               {profileError || saveError}
             </div>
-          )}
+          ) : null}
 
-          {/* Tabs */}
-          <div
-            ref={addRevealRef}
-            className="translate-y-6 opacity-0 transition-all duration-600"
-            style={{ transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)" }}
-          >
+          <div>
             <ProfileTabs
               activeTab={activeTab}
               onTabChange={handleTabChange}
@@ -260,47 +216,39 @@ export default function ProfilePage() {
             />
           </div>
 
-          {activeTab === "overview" && (
-            <ProfileHero
-              user={user}
-              difficulties={difficulties}
-              submissions={submissions}
-              onEditClick={() => handleTabChange("settings")}
-              onShareClick={() => toast("Profile link copied", "success")}
-            />
-          )}
-
-          {/* Tab panels */}
-          <div
-            ref={addRevealRef}
-            className="translate-y-6 opacity-0 transition-all duration-600"
-            style={{
-              transitionTimingFunction: "cubic-bezier(0.22,1,0.36,1)",
-              transitionDelay: "200ms",
-            }}
-          >
-            {activeTab === "overview" && (
-              <OverviewPanel
-                ratingHistory={ratingHistory}
+          {activeTab === "overview" ? (
+            <div>
+              <ProfileHero
+                user={user}
+                difficulties={difficulties}
                 submissions={submissions}
+                onEditClick={() => handleTabChange("settings")}
+                onShareClick={handleShare}
               />
-            )}
+            </div>
+          ) : null}
 
-            {activeTab === "submissions" && (
+          <div>
+            {activeTab === "overview" ? (
+              <OverviewPanel submissions={submissions} />
+            ) : null}
+
+            {activeTab === "submissions" ? (
               <SubmissionsPanel
                 submissions={submissions}
                 allSubmissions={submissions}
                 onOpenSubmission={openSubmission}
+                onProblemClick={openProblem}
                 onToast={toast}
                 totalCount={user.totalSubmissions}
               />
-            )}
+            ) : null}
 
-            {activeTab === "contests" && (
+            {activeTab === "contests" ? (
               <ContestsPanel contests={contests} onToast={toast} />
-            )}
+            ) : null}
 
-            {activeTab === "settings" && (
+            {activeTab === "settings" ? (
               <SettingsPanel
                 key={`${user.id}-${user.name}-${user.email}-${user.dept}-${user.git}-${user.bio}-${user.avatarUrl}`}
                 user={user}
@@ -308,14 +256,13 @@ export default function ProfilePage() {
                 onSave={handleSave}
                 onToast={toast}
               />
-            )}
+            ) : null}
           </div>
         </main>
 
-        {/* Footer */}
         <footer className="mt-12 border-t border-black/7 py-6">
           <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 text-xs text-slate-500 md:flex-row">
-            <span>QuickJudge V2.0 — Built for competitive learners</span>
+            <span>QuickJudge V2.0 - Built for competitive learners</span>
             <div className="flex gap-4">
               <a href="#" className="transition-colors hover:text-slate-800">
                 Documentation

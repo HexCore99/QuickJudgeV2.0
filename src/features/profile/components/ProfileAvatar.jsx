@@ -8,8 +8,7 @@ export default function ProfileAvatar({ name, email, src, onEditClick }) {
     <div
       className="relative h-[120px] w-[120px] shrink-0 rounded-full p-[3px]"
       style={{
-        background:
-          "conic-gradient(#c2850a 0deg, #c2850a 260deg, rgba(0,0,0,0.06) 260deg, rgba(0,0,0,0.06) 360deg)",
+        background: "#c2850a",
       }}
     >
       <img

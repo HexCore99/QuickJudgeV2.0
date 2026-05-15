@@ -16,9 +16,9 @@ export const fetchProfile = createAsyncThunk(
 
 export const saveProfile = createAsyncThunk(
   "profile/saveProfile",
-  async (payload, thunkAPI) => {
+  async (profileData, thunkAPI) => {
     try {
-      return await updateProfileApi(payload);
+      return await updateProfileApi(profileData);
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.message || "Failed to update profile.",
