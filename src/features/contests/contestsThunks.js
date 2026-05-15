@@ -1,14 +1,21 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import {
-  getContestAnnouncementsApi,
+  createContestApi,
   getContestDetailsApi,
-  getContestLeaderboardApi,
-  getContestQueriesApi,
-  getContestSubmissionsApi,
   getContestsApi,
   registerUpcomingContestApi,
-  submitContestQueryApi,
   verifyContestPasswordApi,
+  updateContestScheduleApi,
+  deleteContestApi,
+  getContestSubmissionsApi,
+  getContestLeaderboardApi,
+  getContestAnnouncementsApi,
+  createContestAnnouncementApi,
+  updateContestAnnouncementApi,
+  deleteContestAnnouncementApi,
+  getContestQueriesApi,
+  submitQueryApi,
+  replyContestQueryApi,
 } from "./contestsApi";
 
 export const fetchContests = createAsyncThunk(
@@ -19,6 +26,19 @@ export const fetchContests = createAsyncThunk(
     } catch (error) {
       return thunkAPI.rejectWithValue(
         error.message || "Failed to fetch contests.",
+      );
+    }
+  },
+);
+
+export const createContestThunk = createAsyncThunk(
+  "contests/createContest",
+  async (payload, thunkAPI) => {
+    try {
+      return await createContestApi(payload);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to create contest.",
       );
     }
   },
@@ -63,6 +83,45 @@ export const fetchContestDetails = createAsyncThunk(
   },
 );
 
+export const updateContestScheduleThunk = createAsyncThunk(
+  "contests/updateContestSchedule",
+  async ({ contestId, startTime, endTime }, thunkAPI) => {
+    try {
+      return await updateContestScheduleApi(contestId, { startTime, endTime });
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to update contest schedule.",
+      );
+    }
+  },
+);
+
+export const deleteContestThunk = createAsyncThunk(
+  "contests/deleteContest",
+  async (contestId, thunkAPI) => {
+    try {
+      return await deleteContestApi(contestId);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to delete contest.",
+      );
+    }
+  },
+);
+
+export const fetchContestSubmissions = createAsyncThunk(
+  "contests/fetchContestSubmissions",
+  async (contestId, thunkAPI) => {
+    try {
+      return await getContestSubmissionsApi(contestId);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to fetch submissions.",
+      );
+    }
+  },
+);
+
 export const fetchContestLeaderboard = createAsyncThunk(
   "contests/fetchContestLeaderboard",
   async (contestId, thunkAPI) => {
@@ -76,19 +135,6 @@ export const fetchContestLeaderboard = createAsyncThunk(
   },
 );
 
-export const fetchContestSubmissions = createAsyncThunk(
-  "contests/fetchContestSubmissions",
-  async (contestId, thunkAPI) => {
-    try {
-      return await getContestSubmissionsApi(contestId);
-    } catch (error) {
-      return thunkAPI.rejectWithValue(
-        error.message || "Failed to fetch contest submissions.",
-      );
-    }
-  },
-);
-
 export const fetchContestAnnouncements = createAsyncThunk(
   "contests/fetchContestAnnouncements",
   async (contestId, thunkAPI) => {
@@ -96,7 +142,49 @@ export const fetchContestAnnouncements = createAsyncThunk(
       return await getContestAnnouncementsApi(contestId);
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.message || "Failed to fetch contest announcements.",
+        error.message || "Failed to fetch announcements.",
+      );
+    }
+  },
+);
+
+export const createContestAnnouncement = createAsyncThunk(
+  "contests/createContestAnnouncement",
+  async ({ contestId, title, body }, thunkAPI) => {
+    try {
+      return await createContestAnnouncementApi(contestId, { title, body });
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to create announcement.",
+      );
+    }
+  },
+);
+
+export const updateContestAnnouncement = createAsyncThunk(
+  "contests/updateContestAnnouncement",
+  async ({ contestId, announcementId, title, body }, thunkAPI) => {
+    try {
+      return await updateContestAnnouncementApi(contestId, announcementId, {
+        title,
+        body,
+      });
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to update announcement.",
+      );
+    }
+  },
+);
+
+export const deleteContestAnnouncement = createAsyncThunk(
+  "contests/deleteContestAnnouncement",
+  async ({ contestId, announcementId }, thunkAPI) => {
+    try {
+      return await deleteContestAnnouncementApi(contestId, announcementId);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to delete announcement.",
       );
     }
   },
@@ -109,7 +197,7 @@ export const fetchContestQueries = createAsyncThunk(
       return await getContestQueriesApi(contestId);
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.message || "Failed to fetch contest queries.",
+        error.message || "Failed to fetch queries.",
       );
     }
   },
@@ -119,11 +207,25 @@ export const submitQuery = createAsyncThunk(
   "contests/submitQuery",
   async ({ contestId, question }, thunkAPI) => {
     try {
-      return await submitContestQueryApi({ contestId, question });
+      return await submitQueryApi(contestId, question);
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.message || "Failed to submit your question.",
+        error.message || "Failed to submit query.",
       );
     }
   },
 );
+
+export const replyContestQuery = createAsyncThunk(
+  "contests/replyContestQuery",
+  async ({ contestId, queryId, answer }, thunkAPI) => {
+    try {
+      return await replyContestQueryApi(contestId, queryId, answer);
+    } catch (error) {
+      return thunkAPI.rejectWithValue(
+        error.message || "Failed to reply to query.",
+      );
+    }
+  },
+);
+//

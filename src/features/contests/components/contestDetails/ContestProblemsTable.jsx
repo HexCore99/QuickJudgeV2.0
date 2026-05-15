@@ -1,11 +1,8 @@
-import { useParams } from "react-router-dom";
 import ProblemStatusDot from "../../../problems/components/ProblemStatusDot.jsx";
 import ProblemTitleLink from "../../../problems/components/ProblemTitleLink.jsx";
 import ProblemDifficultyBadge from "../../../problems/components/ProblemDifficultyBadge.jsx";
 
-function ContestProblemsTable({ problems }) {
-  const { contestId } = useParams();
-
+function ContestProblemsTable({ contestId, contestTitle, problems }) {
   return (
     <div className="mx-6 overflow-hidden rounded-2xl border border-slate-200 bg-white">
       {problems.map((problem, index) => (
@@ -17,8 +14,9 @@ function ContestProblemsTable({ problems }) {
             <ProblemStatusDot difficulty={problem.difficulty} />
             <span className="w-5 text-sm text-slate-500">{problem.id}</span>
             <ProblemTitleLink
-              to={`/student/${contestId}/problems/${problem.id}`}
+              to={`/student/contests/${contestId}/problems/${problem.id}`}
               title={problem.title}
+              state={{ problem: { ...problem, contestTitle } }}
             />
           </div>
 
