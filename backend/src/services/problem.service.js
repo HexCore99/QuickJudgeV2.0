@@ -1,0 +1,593 @@
+import { pool } from "../config/db.js";
+
+let problemTablesReadyPromise = null;
+
+function createServiceError(message, statusCode = 400) {
+  const error = new Error(message);
+  error.statusCode = statusCode;
+  return error;
+}
+
+async function createProblemTables() {
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS problems (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      author_id INT NOT NULL,
+      title VARCHAR(255) NOT NULL,
+      statement TEXT NOT NULL,
+      input_format TEXT NULL,
+      output_format TEXT NULL,
+      constraints_text TEXT NULL,
+      difficulty ENUM('Easy', 'Medium', 'Hard') NOT NULL DEFAULT 'Medium',
+      points INT NOT NULL DEFAULT 100,
+      time_limit_seconds DECIMAL(6, 2) NOT NULL DEFAULT 1.00,
+      memory_limit_mb INT NOT NULL DEFAULT 256,
+      has_editorial TINYINT(1) NOT NULL DEFAULT 0,
+      is_published TINYINT(1) NOT NULL DEFAULT 0,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_problems_author_id (author_id),
+      CONSTRAINT fk_problems_author
+        FOREIGN KEY (author_id) REFERENCES users(id)
+        ON DELETE CASCADE
+    ) ENGINE=InnoDB
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS problem_tags (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      problem_id INT NOT NULL,
+      tag_name VARCHAR(100) NOT NULL,
+      UNIQUE KEY uniq_problem_tag (problem_id, tag_name),
+      INDEX idx_problem_tags_problem_id (problem_id),
+      CONSTRAINT fk_problem_tags_problem
+        FOREIGN KEY (problem_id) REFERENCES problems(id)
+        ON DELETE CASCADE
+    ) ENGINE=InnoDB
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS problem_test_cases (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      problem_id INT NOT NULL,
+      input_text TEXT NOT NULL,
+      output_text TEXT NOT NULL,
+      is_hidden TINYINT(1) NOT NULL DEFAULT 0,
+      sort_order INT NOT NULL DEFAULT 0,
+      INDEX idx_problem_test_cases_problem_id (problem_id),
+      CONSTRAINT fk_problem_test_cases_problem
+        FOREIGN KEY (problem_id) REFERENCES problems(id)
+        ON DELETE CASCADE
+    ) ENGINE=InnoDB
+  `);
+
+  await pool.execute(`
+    CREATE TABLE IF NOT EXISTS problem_editorials (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      problem_id INT NOT NULL,
+      markdown_content TEXT NULL,
+      code_content TEXT NULL,
+      video_link VARCHAR(500) NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY uniq_problem_editorial (problem_id),
+      INDEX idx_problem_editorials_problem_id (problem_id),
+      CONSTRAINT fk_problem_editorials_problem
+        FOREIGN KEY (problem_id) REFERENCES problems(id)
+        ON DELETE CASCADE
+    ) ENGINE=InnoDB
+  `);
+
+  const [publicationColumnRows] = await pool.execute(
+    `SHOW COLUMNS FROM problems LIKE 'is_published'`,
+  );
+
+  if (!publicationColumnRows.length) {
+    await pool.execute(`
+      ALTER TABLE problems
+      ADD COLUMN is_published TINYINT(1) NOT NULL DEFAULT 0
+      AFTER has_editorial
+    `);
+  }
+}
+
+export async function ensureProblemTables() {
+  if (!problemTablesReadyPromise) {
+    problemTablesReadyPromise = createProblemTables();
+  }
+
+  return problemTablesReadyPromise;
+}
+
+function normalizeTags(tags = []) {
+  return [
+    ...new Set(
+      tags
+        .map((tag) => String(tag).trim())
+        .filter(Boolean)
+        .slice(0, 20),
+    ),
+  ];
+}
+
+function normalizeTestCases(testCases = []) {
+  return testCases
+    .map((testCase, index) => ({
+      input: String(testCase.input || ""),
+      output: String(testCase.output || ""),
+      isHidden: Boolean(testCase.isHidden),
+      sortOrder: Number.isInteger(Number(testCase.sortOrder))
+        ? Number(testCase.sortOrder)
+        : index,
+    }))
+    .filter((testCase) => testCase.input.trim() || testCase.output.trim());
+}
+
+function mapProblemRow(row, tags = []) {
+  return {
+    id: row.id,
+    authorId: row.author_id,
+    title: row.title,
+    statement: row.statement,
+    inputFormat: row.input_format || "",
+    outputFormat: row.output_format || "",
+    constraints: row.constraints_text || "",
+    difficulty: row.difficulty,
+    points: row.points,
+    timeLimitSeconds: Number(row.time_limit_seconds),
+    memoryLimitMb: row.memory_limit_mb,
+    hasEditorial: Boolean(row.has_editorial),
+    isPublished: Boolean(row.is_published),
+    tags,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapTestCaseRow(row) {
+  return {
+    id: row.id,
+    input: row.input_text,
+    output: row.output_text,
+    isHidden: Boolean(row.is_hidden),
+    sortOrder: row.sort_order,
+  };
+}
+
+function mapEditorialRow(row) {
+  return {
+    id: row?.id || null,
+    problemId: row?.problem_id || null,
+    markdownContent: row?.markdown_content || "",
+    codeContent: row?.code_content || "",
+    videoLink: row?.video_link || "",
+    createdAt: row?.created_at || null,
+    updatedAt: row?.updated_at || null,
+  };
+}
+
+async function getTagsByProblemIds(problemIds) {
+  if (!problemIds.length) {
+    return {};
+  }
+
+  const placeholders = problemIds.map(() => "?").join(",");
+  const [rows] = await pool.execute(
+    `SELECT problem_id, tag_name
+     FROM problem_tags
+     WHERE problem_id IN (${placeholders})
+     ORDER BY id ASC`,
+    problemIds,
+  );
+
+  return rows.reduce((acc, row) => {
+    if (!acc[row.problem_id]) {
+      acc[row.problem_id] = [];
+    }
+
+    acc[row.problem_id].push(row.tag_name);
+    return acc;
+  }, {});
+}
+
+async function replaceProblemTags(connection, problemId, tags) {
+  await connection.execute(`DELETE FROM problem_tags WHERE problem_id = ?`, [
+    problemId,
+  ]);
+
+  for (const tag of normalizeTags(tags)) {
+    await connection.execute(
+      `INSERT INTO problem_tags (problem_id, tag_name)
+       VALUES (?, ?)`,
+      [problemId, tag],
+    );
+  }
+}
+
+async function replaceProblemTestCases(connection, problemId, testCases) {
+  await connection.execute(
+    `DELETE FROM problem_test_cases WHERE problem_id = ?`,
+    [problemId],
+  );
+
+  for (const testCase of normalizeTestCases(testCases)) {
+    await connection.execute(
+      `INSERT INTO problem_test_cases
+       (problem_id, input_text, output_text, is_hidden, sort_order)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        problemId,
+        testCase.input,
+        testCase.output,
+        testCase.isHidden ? 1 : 0,
+        testCase.sortOrder,
+      ],
+    );
+  }
+}
+
+async function ensureAuthorOwnsProblem(connection, authorId, problemId) {
+  const [rows] = await connection.execute(
+    `SELECT id
+     FROM problems
+     WHERE id = ? AND author_id = ?
+     LIMIT 1`,
+    [problemId, authorId],
+  );
+
+  if (!rows.length) {
+    throw createServiceError("Problem not found.", 404);
+  }
+}
+
+export async function getProblemsForAuthor(authorId) {
+  await ensureProblemTables();
+
+  const [rows] = await pool.execute(
+    `SELECT id, author_id, title, statement, input_format, output_format,
+            constraints_text, difficulty, points, time_limit_seconds,
+            memory_limit_mb, has_editorial, is_published, created_at, updated_at
+     FROM problems
+     WHERE author_id = ?
+     ORDER BY updated_at DESC, id DESC`,
+    [authorId],
+  );
+
+  const tagsByProblemId = await getTagsByProblemIds(rows.map((row) => row.id));
+
+  return rows.map((row) => mapProblemRow(row, tagsByProblemId[row.id] || []));
+}
+
+export async function getProblemBankItems() {
+  await ensureProblemTables();
+
+  const [rows] = await pool.execute(
+    `SELECT id, author_id, title, statement, input_format, output_format,
+            constraints_text, difficulty, points, time_limit_seconds,
+            memory_limit_mb, has_editorial, is_published, created_at, updated_at
+     FROM problems
+     WHERE is_published = 1
+     ORDER BY updated_at DESC, id DESC`,
+  );
+
+  const tagsByProblemId = await getTagsByProblemIds(rows.map((row) => row.id));
+
+  return rows.map((row) => mapProblemRow(row, tagsByProblemId[row.id] || []));
+}
+
+export async function getProblemForAuthor(authorId, problemId) {
+  await ensureProblemTables();
+
+  const [rows] = await pool.execute(
+    `SELECT id, author_id, title, statement, input_format, output_format,
+            constraints_text, difficulty, points, time_limit_seconds,
+            memory_limit_mb, has_editorial, is_published, created_at, updated_at
+     FROM problems
+     WHERE id = ? AND author_id = ?
+     LIMIT 1`,
+    [problemId, authorId],
+  );
+
+  if (!rows.length) {
+    throw createServiceError("Problem not found.", 404);
+  }
+
+  const problemIdNumber = rows[0].id;
+  const tagsByProblemId = await getTagsByProblemIds([problemIdNumber]);
+  const [testCaseRows] = await pool.execute(
+    `SELECT id, input_text, output_text, is_hidden, sort_order
+     FROM problem_test_cases
+     WHERE problem_id = ?
+     ORDER BY sort_order ASC, id ASC`,
+    [problemIdNumber],
+  );
+
+  return {
+    ...mapProblemRow(rows[0], tagsByProblemId[problemIdNumber] || []),
+    testCases: testCaseRows.map(mapTestCaseRow),
+  };
+}
+
+export async function getProblemBankItemById(problemId) {
+  await ensureProblemTables();
+
+  const [rows] = await pool.execute(
+    `SELECT id, author_id, title, statement, input_format, output_format,
+            constraints_text, difficulty, points, time_limit_seconds,
+            memory_limit_mb, has_editorial, is_published, created_at, updated_at
+     FROM problems
+     WHERE id = ? AND is_published = 1
+     LIMIT 1`,
+    [problemId],
+  );
+
+  if (!rows.length) {
+    throw createServiceError("Problem not found.", 404);
+  }
+
+  const problemIdNumber = rows[0].id;
+  const tagsByProblemId = await getTagsByProblemIds([problemIdNumber]);
+  const [testCaseRows] = await pool.execute(
+    `SELECT id, input_text, output_text, is_hidden, sort_order
+     FROM problem_test_cases
+     WHERE problem_id = ? AND is_hidden = 0
+     ORDER BY sort_order ASC, id ASC`,
+    [problemIdNumber],
+  );
+
+  return {
+    ...mapProblemRow(rows[0], tagsByProblemId[problemIdNumber] || []),
+    testCases: testCaseRows.map(mapTestCaseRow),
+  };
+}
+
+export async function getProblemCloneSourceForAdmin(adminId, problemId) {
+  await ensureProblemTables();
+
+  const [rows] = await pool.execute(
+    `SELECT id, author_id, title, statement, input_format, output_format,
+            constraints_text, difficulty, points, time_limit_seconds,
+            memory_limit_mb, has_editorial, is_published, created_at, updated_at
+     FROM problems
+     WHERE id = ? AND (author_id = ? OR is_published = 1)
+     LIMIT 1`,
+    [problemId, adminId],
+  );
+
+  if (!rows.length) {
+    throw createServiceError("Problem not found.", 404);
+  }
+
+  const problemIdNumber = rows[0].id;
+  const tagsByProblemId = await getTagsByProblemIds([problemIdNumber]);
+  const [testCaseRows] = await pool.execute(
+    `SELECT id, input_text, output_text, is_hidden, sort_order
+     FROM problem_test_cases
+     WHERE problem_id = ?
+     ORDER BY sort_order ASC, id ASC`,
+    [problemIdNumber],
+  );
+
+  return {
+    ...mapProblemRow(rows[0], tagsByProblemId[problemIdNumber] || []),
+    testCases: testCaseRows.map(mapTestCaseRow),
+  };
+}
+
+export async function createProblemForAuthor(authorId, payload) {
+  await ensureProblemTables();
+
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const [result] = await connection.execute(
+      `INSERT INTO problems
+       (author_id, title, statement, input_format, output_format,
+        constraints_text, difficulty, points, time_limit_seconds,
+        memory_limit_mb, is_published)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        authorId,
+        payload.title.trim(),
+        payload.statement.trim(),
+        payload.inputFormat?.trim() || null,
+        payload.outputFormat?.trim() || null,
+        payload.constraints?.trim() || null,
+        payload.difficulty,
+        Number(payload.points),
+        Number(payload.timeLimitSeconds),
+        Number(payload.memoryLimitMb),
+        payload.isPublished ? 1 : 0,
+      ],
+    );
+
+    await replaceProblemTags(connection, result.insertId, payload.tags || []);
+    await replaceProblemTestCases(
+      connection,
+      result.insertId,
+      payload.testCases || [],
+    );
+
+    await connection.commit();
+
+    const problem = await getProblemForAuthor(authorId, result.insertId);
+
+    return problem;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+export async function updateProblemForAuthor(authorId, problemId, payload) {
+  await ensureProblemTables();
+
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    await ensureAuthorOwnsProblem(connection, authorId, problemId);
+    const publicationValue =
+      typeof payload.isPublished === "boolean"
+        ? payload.isPublished
+          ? 1
+          : 0
+        : null;
+
+    await connection.execute(
+      `UPDATE problems
+       SET title = ?,
+           statement = ?,
+           input_format = ?,
+           output_format = ?,
+           constraints_text = ?,
+           difficulty = ?,
+           points = ?,
+           time_limit_seconds = ?,
+           memory_limit_mb = ?,
+           is_published = COALESCE(?, is_published)
+       WHERE id = ? AND author_id = ?`,
+      [
+        payload.title.trim(),
+        payload.statement.trim(),
+        payload.inputFormat?.trim() || null,
+        payload.outputFormat?.trim() || null,
+        payload.constraints?.trim() || null,
+        payload.difficulty,
+        Number(payload.points),
+        Number(payload.timeLimitSeconds),
+        Number(payload.memoryLimitMb),
+        publicationValue,
+        problemId,
+        authorId,
+      ],
+    );
+
+    await replaceProblemTags(connection, problemId, payload.tags || []);
+    await replaceProblemTestCases(
+      connection,
+      problemId,
+      payload.testCases || [],
+    );
+
+    await connection.commit();
+    return getProblemForAuthor(authorId, problemId);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+export async function updateProblemPublicationForAuthor(
+  authorId,
+  problemId,
+  isPublished,
+) {
+  await ensureProblemTables();
+
+  const [result] = await pool.execute(
+    `UPDATE problems
+     SET is_published = ?
+     WHERE id = ? AND author_id = ?`,
+    [isPublished ? 1 : 0, problemId, authorId],
+  );
+
+  if (!result.affectedRows) {
+    throw createServiceError("Problem not found.", 404);
+  }
+
+  return getProblemForAuthor(authorId, problemId);
+}
+
+export async function deleteProblemForAuthor(authorId, problemId) {
+  await ensureProblemTables();
+
+  const [result] = await pool.execute(
+    `DELETE FROM problems
+     WHERE id = ? AND author_id = ?`,
+    [problemId, authorId],
+  );
+
+  if (!result.affectedRows) {
+    throw createServiceError("Problem not found.", 404);
+  }
+
+  return {
+    id: Number(problemId),
+  };
+}
+
+export async function getEditorialForAuthor(authorId, problemId) {
+  await ensureProblemTables();
+
+  const connection = await pool.getConnection();
+
+  try {
+    await ensureAuthorOwnsProblem(connection, authorId, problemId);
+
+    const [rows] = await connection.execute(
+      `SELECT id, problem_id, markdown_content, code_content, video_link,
+              created_at, updated_at
+       FROM problem_editorials
+       WHERE problem_id = ?
+       LIMIT 1`,
+      [problemId],
+    );
+
+    return rows.length
+      ? mapEditorialRow(rows[0])
+      : {
+          ...mapEditorialRow(null),
+          problemId: Number(problemId),
+        };
+  } finally {
+    connection.release();
+  }
+}
+
+export async function saveEditorialForAuthor(authorId, problemId, payload) {
+  await ensureProblemTables();
+
+  const connection = await pool.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    await ensureAuthorOwnsProblem(connection, authorId, problemId);
+
+    const markdownContent = payload.markdownContent?.trim() || null;
+    const codeContent = payload.codeContent?.trim() || null;
+    const videoLink = payload.videoLink?.trim() || null;
+
+    await connection.execute(
+      `INSERT INTO problem_editorials
+       (problem_id, markdown_content, code_content, video_link)
+       VALUES (?, ?, ?, ?)
+       ON DUPLICATE KEY UPDATE
+         markdown_content = VALUES(markdown_content),
+         code_content = VALUES(code_content),
+         video_link = VALUES(video_link)`,
+      [problemId, markdownContent, codeContent, videoLink],
+    );
+
+    await connection.execute(
+      `UPDATE problems
+       SET has_editorial = 1
+       WHERE id = ? AND author_id = ?`,
+      [problemId, authorId],
+    );
+
+    await connection.commit();
+    return getEditorialForAuthor(authorId, problemId);
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
