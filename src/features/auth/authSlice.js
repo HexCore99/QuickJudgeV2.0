@@ -1,13 +1,31 @@
 import { createSlice } from "@reduxjs/toolkit";
 import { loginUser, signupUser } from "./authThunks";
 
-const savedUser = localStorage.getItem("qj_user");
-const savedToken = localStorage.getItem("qj_token");
+function readStoredAuth() {
+  const token = localStorage.getItem("qj_token");
+  const userString = localStorage.getItem("qj_user");
+
+  if (!token || !userString) {
+    localStorage.removeItem("qj_user");
+    localStorage.removeItem("qj_token");
+    return { user: null, token: null };
+  }
+
+  try {
+    return { user: JSON.parse(userString), token };
+  } catch {
+    localStorage.removeItem("qj_user");
+    localStorage.removeItem("qj_token");
+    return { user: null, token: null };
+  }
+}
+
+const storedAuth = readStoredAuth();
 
 const initialState = {
-  user: savedUser ? JSON.parse(savedUser) : null,
-  token: savedToken || null,
-  isAuthenticated: Boolean(savedToken),
+  user: storedAuth.user,
+  token: storedAuth.token,
+  isAuthenticated: Boolean(storedAuth.user && storedAuth.token),
   isLoading: false,
   error: null,
 };
