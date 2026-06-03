@@ -92,12 +92,16 @@ export default function SettingsPanel({ user, isSaving, onSave, onToast }) {
     const currentEmail = String(user?.email || "")
       .trim()
       .toLowerCase();
+    const isNameChanging = form.name.trim() !== String(user?.name || "").trim();
     const isEmailChanging = email !== currentEmail;
     const isPasswordChanging = Boolean(
       form.newPassword || form.confirmPassword,
     );
 
-    if ((isEmailChanging || isPasswordChanging) && !form.currentPassword) {
+    if (
+      (isNameChanging || isEmailChanging || isPasswordChanging) &&
+      !form.currentPassword
+    ) {
       onToast?.("Current password is required", "error");
       return;
     }
