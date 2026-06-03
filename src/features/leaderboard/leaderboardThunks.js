@@ -8,7 +8,7 @@ export const fetchGlobalLeaderboard = createAsyncThunk(
       return await getGlobalLeaderboardApi();
     } catch (error) {
       return thunkAPI.rejectWithValue(
-        error.message || "Failed to fetch global leaderboard.",
+        error.message || "Failed to fetch leaderboard.",
       );
     }
   },
