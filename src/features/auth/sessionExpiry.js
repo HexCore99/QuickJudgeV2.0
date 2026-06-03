@@ -9,6 +9,23 @@ function clearStoredSession() {
   localStorage.removeItem("qj_user");
 }
 
+function getRequestUrl(input) {
+  if (typeof input === "string") {
+    return input;
+  }
+
+  return input?.url || "";
+}
+
+function isAuthEndpoint(url) {
+  try {
+    const parsedUrl = new URL(url, window.location.origin);
+    return parsedUrl.pathname.startsWith("/api/auth/");
+  } catch {
+    return String(url).includes("/api/auth/");
+  }
+}
+
 async function isExpiredSessionResponse(response) {
   if (response.status !== 401) {
     return false;
@@ -26,6 +43,18 @@ async function isExpiredSessionResponse(response) {
   } catch {
     return false;
   }
+}
+
+async function shouldForceLogout(response, requestUrl) {
+  if (response.status !== 401 || isAuthEndpoint(requestUrl)) {
+    return false;
+  }
+
+  if (!localStorage.getItem("qj_token")) {
+    return false;
+  }
+
+  return true;
 }
 
 function forceLogout() {
@@ -50,9 +79,13 @@ export function installSessionExpiryInterceptor() {
   const originalFetch = window.fetch.bind(window);
 
   window.fetch = async (...args) => {
+    const requestUrl = getRequestUrl(args[0]);
     const response = await originalFetch(...args);
 
-    if (await isExpiredSessionResponse(response)) {
+    if (
+      (await isExpiredSessionResponse(response)) ||
+      (await shouldForceLogout(response, requestUrl))
+    ) {
       forceLogout();
     }
 
