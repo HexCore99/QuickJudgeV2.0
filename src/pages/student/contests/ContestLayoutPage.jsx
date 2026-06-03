@@ -52,7 +52,7 @@ function ContestLayoutPage() {
             to="/student/contests"
             className="text-sm font-medium text-amber-700 hover:text-amber-800"
           >
-            &larr;Back to contests
+            Back to contests
           </Link>
         </div>
 
@@ -61,6 +61,7 @@ function ContestLayoutPage() {
             title={contestDetails.title}
             statusText={contestDetails.statusText}
             duration={contestDetails.duration}
+            endTime={contestDetails.endTime}
           />
 
           <div className="p-6">
