@@ -2,9 +2,8 @@ import { createSlice } from "@reduxjs/toolkit";
 import { fetchGlobalLeaderboard } from "./leaderboardThunks";
 
 const initialState = {
-  data: [],
+  entries: [],
   isLoading: false,
-  hasFetched: false,
   error: null,
 };
 
@@ -20,12 +19,12 @@ const leaderboardSlice = createSlice({
       })
       .addCase(fetchGlobalLeaderboard.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.hasFetched = true;
-        state.data = action.payload;
+        state.entries = Array.isArray(action.payload) ? action.payload : [];
+        state.error = null;
       })
       .addCase(fetchGlobalLeaderboard.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload || "Failed to fetch global leaderboard.";
+        state.error = action.payload || "Failed to fetch leaderboard.";
       });
   },
 });
