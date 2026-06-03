@@ -17,6 +17,7 @@ function EditorToolbar({
   isExpanded,
   onExpandToggle,
   onReset,
+  saveStatus,
 }) {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -54,7 +55,7 @@ function EditorToolbar({
         </button>
 
         {dropdownOpen && (
-          <div className="absolute left-0 top-full z-50 mt-1 w-36 overflow-hidden rounded-xl border border-[#333] bg-[#252526] py-1 shadow-xl shadow-black/50">
+          <div className="absolute top-full left-0 z-50 mt-1 w-36 overflow-hidden rounded-xl border border-[#333] bg-[#252526] py-1 shadow-xl shadow-black/50">
             {LANGUAGES.map((lang) => (
               <button
                 key={lang.id}
@@ -76,33 +77,49 @@ function EditorToolbar({
         )}
       </div>
 
-      <div className="flex items-center gap-1">
-        <button
-          type="button"
-          onClick={onThemeToggle}
-          className="rounded-lg p-2 text-slate-400 transition hover:bg-[#333] hover:text-slate-200"
-          title={theme === "vs-dark" ? "Light mode" : "Dark mode"}
-        >
-          {theme === "vs-dark" ? <Sun size={15} /> : <Moon size={15} />}
-        </button>
+      <div className="flex items-center gap-2">
+        {saveStatus && (
+          <span
+            className={`hidden text-[11px] font-medium sm:inline ${
+              saveStatus === "Save failed"
+                ? "text-rose-400"
+                : saveStatus === "Saving..."
+                  ? "text-amber-300"
+                  : "text-emerald-400"
+            }`}
+          >
+            {saveStatus}
+          </span>
+        )}
 
-        <button
-          type="button"
-          onClick={onExpandToggle}
-          className="rounded-lg p-2 text-slate-400 transition hover:bg-[#333] hover:text-slate-200"
-          title={isExpanded ? "Collapse statement" : "Expand editor"}
-        >
-          {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            type="button"
+            onClick={onThemeToggle}
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-[#333] hover:text-slate-200"
+            title={theme === "vs-dark" ? "Light mode" : "Dark mode"}
+          >
+            {theme === "vs-dark" ? <Sun size={15} /> : <Moon size={15} />}
+          </button>
 
-        <button
-          type="button"
-          onClick={onReset}
-          className="rounded-lg p-2 text-slate-400 transition hover:bg-[#333] hover:text-rose-400"
-          title="Reset code"
-        >
-          <RotateCcw size={15} />
-        </button>
+          <button
+            type="button"
+            onClick={onExpandToggle}
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-[#333] hover:text-slate-200"
+            title={isExpanded ? "Collapse statement" : "Expand editor"}
+          >
+            {isExpanded ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
+          </button>
+
+          <button
+            type="button"
+            onClick={onReset}
+            className="rounded-lg p-2 text-slate-400 transition hover:bg-[#333] hover:text-rose-400"
+            title="Reset code"
+          >
+            <RotateCcw size={15} />
+          </button>
+        </div>
       </div>
     </div>
   );

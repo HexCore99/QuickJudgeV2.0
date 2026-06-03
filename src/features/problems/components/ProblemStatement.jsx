@@ -1,6 +1,16 @@
-import { useState } from "react";
-import { BookOpen, Check, Copy, FileText, History } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import {
+  BookOpen,
+  Check,
+  Copy,
+  FileText,
+  History,
+  Loader2,
+} from "lucide-react";
 import TagChip from "../../../components/common/TagChip";
+import SubmissionSlidePanel from "../../profile/components/SubmissionSlidePanel";
+import SubmissionsPanel from "../../profile/components/SubmissionsPanel";
+import { getProblemSubmissionsApi } from "../../submissions/submissionsApi";
 import ProblemDifficultyBadge from "./ProblemDifficultyBadge";
 
 function CopyButton({ text }) {
@@ -32,14 +42,14 @@ function CopyButton({ text }) {
 function SampleBlock({ index, input, output }) {
   return (
     <div className="mt-4 overflow-hidden rounded-xl border border-slate-200">
-      <div className="border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-2 text-xs font-semibold tracking-wide text-slate-500 uppercase">
         Sample {index + 1}
       </div>
 
       <div className="grid grid-cols-1 divide-y divide-slate-200 md:grid-cols-2 md:divide-x md:divide-y-0">
         <div>
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-1.5">
-            <span className="text-[11px] font-semibold uppercase text-slate-400">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase">
               Input
             </span>
             <CopyButton text={input} />
@@ -51,7 +61,7 @@ function SampleBlock({ index, input, output }) {
 
         <div>
           <div className="flex items-center justify-between border-b border-slate-100 px-4 py-1.5">
-            <span className="text-[11px] font-semibold uppercase text-slate-400">
+            <span className="text-[11px] font-semibold text-slate-400 uppercase">
               Output
             </span>
             <CopyButton text={output} />
@@ -87,40 +97,75 @@ const LEFT_TABS = [
   { key: "editorial", label: "Editorial", icon: BookOpen },
 ];
 
-const MOCK_SUBMISSIONS = [
-  {
-    id: 1,
-    time: "2 minutes ago",
-    language: "C++",
-    verdict: "Accepted",
-    runtime: "12ms",
-    memory: "3.8 MB",
-  },
-  {
-    id: 2,
-    time: "15 minutes ago",
-    language: "C++",
-    verdict: "Wrong Answer",
-    runtime: "8ms",
-    memory: "3.6 MB",
-  },
-  {
-    id: 3,
-    time: "1 hour ago",
-    language: "Python",
-    verdict: "Time Limit Exceeded",
-    runtime: "> 1000ms",
-    memory: "12.4 MB",
-  },
-];
+function isPositiveInteger(value) {
+  const numberValue = Number(value);
 
-const VERDICT_COLORS = {
-  Accepted: "text-emerald-600",
-  "Wrong Answer": "text-rose-600",
-  "Time Limit Exceeded": "text-amber-600",
-  "Runtime Error": "text-orange-600",
-  "Compilation Error": "text-red-600",
-};
+  return Number.isInteger(numberValue) && numberValue > 0;
+}
+
+function getProblemSubmissionId(problem) {
+  const candidate = problem?.problemBankId || problem?.problemId || problem?.id;
+
+  return isPositiveInteger(candidate) ? Number(candidate) : null;
+}
+
+function getContestProblemCode(problem, contestId) {
+  if (!contestId) {
+    return null;
+  }
+
+  return problem?.contestProblemCode || problem?.id || null;
+}
+
+function timeAgo(dateStr) {
+  const submittedTime = new Date(dateStr).getTime();
+
+  if (Number.isNaN(submittedTime)) {
+    return "--";
+  }
+
+  const diff = Math.max(0, Math.floor((Date.now() - submittedTime) / 1000));
+  if (diff < 60) return `${diff}s ago`;
+  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+}
+
+function formatMemory(memoryKb) {
+  if (memoryKb === null || memoryKb === undefined) {
+    return "--";
+  }
+
+  if (memoryKb >= 1024) {
+    return `${(memoryKb / 1024).toFixed(1)} MB`;
+  }
+
+  return `${memoryKb} KB`;
+}
+
+function getFilterKey(verdict) {
+  if (verdict === "AC") return "ac";
+  if (verdict === "WA") return "wa";
+  return "other";
+}
+
+function mapProblemSubmission(submission, problemTitle) {
+  const verdict = String(submission.verdict || "CE").toUpperCase();
+
+  return {
+    problem: submission.problemTitle || problemTitle || "Problem",
+    id: `Submission #${submission.id}`,
+    verdict,
+    time: timeAgo(submission.submittedAt),
+    timeLabel: "Submitted Ago",
+    mem: formatMemory(submission.memoryKb),
+    lang: submission.language,
+    f: getFilterKey(verdict),
+    at: submission.submittedAt || String(submission.id),
+    tc: submission.testCaseNote || "No test-case details available.",
+    code: submission.sourceCode || "Source code is not available.",
+  };
+}
 
 function DescriptionContent({ problem }) {
   return (
@@ -209,44 +254,141 @@ function DescriptionContent({ problem }) {
   );
 }
 
-function SubmissionsContent() {
-  return (
-    <div className="px-5 py-6 sm:px-7">
-      <h2 className="mb-4 text-lg font-bold text-slate-800">My Submissions</h2>
+function SubmissionsContent({ problem, contestId, refreshKey }) {
+  const [submissions, setSubmissions] = useState([]);
+  const [selectedSubmissionIndex, setSelectedSubmissionIndex] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-      <div className="overflow-hidden rounded-xl border border-slate-200">
-        <div className="grid grid-cols-[1.2fr_1fr_1.4fr_1fr_1fr] border-b border-slate-200 bg-slate-50 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          <span>Time</span>
-          <span>Language</span>
-          <span>Verdict</span>
-          <span>Runtime</span>
-          <span>Memory</span>
+  const problemSubmissionId = getProblemSubmissionId(problem);
+  const contestProblemCode = getContestProblemCode(problem, contestId);
+
+  useEffect(() => {
+    if (!problemSubmissionId) {
+      setSubmissions([]);
+      return;
+    }
+
+    let isMounted = true;
+
+    async function fetchSubmissions() {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const items = await getProblemSubmissionsApi({
+          problemId: problemSubmissionId,
+          contestId,
+          contestProblemCode,
+        });
+
+        if (isMounted) {
+          setSubmissions(items);
+        }
+      } catch (fetchError) {
+        if (isMounted) {
+          setSubmissions([]);
+          setError(fetchError.message || "Failed to load submissions.");
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    fetchSubmissions();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [contestId, contestProblemCode, problemSubmissionId, refreshKey]);
+
+  const submissionRows = useMemo(
+    () =>
+      submissions.map((submission) =>
+        mapProblemSubmission(submission, problem?.title),
+      ),
+    [problem?.title, submissions],
+  );
+  const selectedSubmission =
+    selectedSubmissionIndex === null
+      ? null
+      : submissionRows[selectedSubmissionIndex];
+
+  function openSubmission(index) {
+    if (index >= 0 && index < submissionRows.length) {
+      setSelectedSubmissionIndex(index);
+    }
+  }
+
+  function closeSubmission() {
+    setSelectedSubmissionIndex(null);
+  }
+
+  if (!problemSubmissionId) {
+    return (
+      <div className="px-5 py-6 sm:px-7">
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-6 py-10 text-center text-sm text-slate-500">
+          Problem data is still loading. Submissions will appear here once the
+          problem is ready.
         </div>
-
-        {MOCK_SUBMISSIONS.map((submission) => (
-          <div
-            key={submission.id}
-            className="grid grid-cols-[1.2fr_1fr_1.4fr_1fr_1fr] border-b border-slate-100 px-4 py-3 text-[13px] transition last:border-b-0 hover:bg-slate-50/60"
-          >
-            <span className="text-slate-500">{submission.time}</span>
-            <span className="font-medium text-slate-700">
-              {submission.language}
-            </span>
-            <span
-              className={`font-semibold ${VERDICT_COLORS[submission.verdict] || "text-slate-600"}`}
-            >
-              {submission.verdict}
-            </span>
-            <span className="font-mono text-slate-500">
-              {submission.runtime}
-            </span>
-            <span className="font-mono text-slate-500">
-              {submission.memory}
-            </span>
-          </div>
-        ))}
       </div>
-    </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="px-5 py-6 sm:px-7">
+        <div className="flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-6 py-12 text-sm text-slate-400">
+          <Loader2 size={16} className="animate-spin" />
+          Loading submissions...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="px-5 py-6 sm:px-7">
+        <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-10 text-center text-sm text-red-600">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  if (!submissions.length) {
+    return (
+      <div className="px-5 py-6 sm:px-7">
+        <div className="rounded-2xl border border-slate-200 bg-white px-6 py-12 text-center text-sm text-slate-400">
+          No submissions yet. Submit a solution to see it here.
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <SubmissionSlidePanel
+        submission={selectedSubmission}
+        isOpen={selectedSubmissionIndex !== null}
+        onClose={closeSubmission}
+      />
+      <div className="px-5 py-6 sm:px-7">
+        <SubmissionsPanel
+          submissions={submissionRows}
+          allSubmissions={submissionRows}
+          onOpenSubmission={openSubmission}
+          title="Problem Submissions"
+          totalCount={submissionRows.length}
+          emptyMessage="No submissions match this verdict filter."
+          problemHint=""
+          verdictHint="click for code"
+          showLoadMore={false}
+        />
+      </div>
+    </>
   );
 }
 
@@ -257,14 +399,14 @@ function EditorialContent({ hasEditorial }) {
         <h2 className="mb-4 text-lg font-bold text-slate-800">Editorial</h2>
         <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 px-6 py-6 text-[14px] leading-7 text-slate-600">
           <p>
-            Start by observing the useful invariant hidden in the statement, then
-            reduce the search space using a hash-based lookup or greedy state
-            transition depending on the language you prefer.
+            Start by observing the useful invariant hidden in the statement,
+            then reduce the search space using a hash-based lookup or greedy
+            state transition depending on the language you prefer.
           </p>
           <p>
             The intended solution maintains the minimal amount of information
-            needed to answer each step in linear or near-linear time, which keeps
-            it within the provided limits.
+            needed to answer each step in linear or near-linear time, which
+            keeps it within the provided limits.
           </p>
         </div>
       </div>
@@ -288,14 +430,19 @@ function EditorialContent({ hasEditorial }) {
   );
 }
 
-function ProblemStatement({ problem }) {
+function ProblemStatement({ problem, contestId, submissionRefreshKey = 0 }) {
   const [activeTab, setActiveTab] = useState("description");
+  const visibleTabs = contestId
+    ? LEFT_TABS.filter((tab) => tab.key !== "editorial")
+    : LEFT_TABS;
+  const currentActiveTab =
+    contestId && activeTab === "editorial" ? "description" : activeTab;
 
   return (
     <div className="flex h-full flex-col bg-white">
       <div className="flex shrink-0 items-center gap-0 border-b border-slate-200 bg-slate-50/80 px-4">
-        {LEFT_TABS.map((tab) => {
-          const isActive = activeTab === tab.key;
+        {visibleTabs.map((tab) => {
+          const isActive = currentActiveTab === tab.key;
           const Icon = tab.icon;
 
           return (
@@ -312,7 +459,7 @@ function ProblemStatement({ problem }) {
               <Icon size={14} />
               {tab.label}
               {isActive && (
-                <span className="absolute bottom-0 left-2 right-2 h-0.5 rounded-full bg-amber-500" />
+                <span className="absolute right-2 bottom-0 left-2 h-0.5 rounded-full bg-amber-500" />
               )}
             </button>
           );
@@ -320,9 +467,17 @@ function ProblemStatement({ problem }) {
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
-        {activeTab === "description" && <DescriptionContent problem={problem} />}
-        {activeTab === "submissions" && <SubmissionsContent />}
-        {activeTab === "editorial" && (
+        {currentActiveTab === "description" && (
+          <DescriptionContent problem={problem} />
+        )}
+        {currentActiveTab === "submissions" && (
+          <SubmissionsContent
+            problem={problem}
+            contestId={contestId}
+            refreshKey={submissionRefreshKey}
+          />
+        )}
+        {!contestId && currentActiveTab === "editorial" && (
           <EditorialContent hasEditorial={problem.hasEditorial} />
         )}
       </div>

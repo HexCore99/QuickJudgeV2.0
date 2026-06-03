@@ -3,8 +3,12 @@ import { ArrowLeft, Timer, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProfileDropdown from "../../../components/common/ProfileDropdown";
 
-function calcTimeLeft(endTime) {
-  const diff = Math.max(0, endTime - Date.now());
+function calcTimeLeft(endTime, now = Date.now()) {
+  const endTimestamp =
+    typeof endTime === "number" ? endTime : new Date(endTime).getTime();
+  const diff = Number.isFinite(endTimestamp)
+    ? Math.max(0, endTimestamp - now)
+    : 0;
 
   return {
     total: diff,
@@ -19,18 +23,19 @@ function pad(value) {
 }
 
 function CountdownTimer({ endTime }) {
-  const [timeLeft, setTimeLeft] = useState(() => calcTimeLeft(endTime));
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     const intervalId = window.setInterval(() => {
-      setTimeLeft(calcTimeLeft(endTime));
+      setNow(Date.now());
     }, 1000);
 
     return () => {
       window.clearInterval(intervalId);
     };
-  }, [endTime]);
+  }, []);
 
+  const timeLeft = calcTimeLeft(endTime, now);
   const isUrgent = timeLeft.total <= 10 * 60 * 1000;
   const isWarning = timeLeft.total <= 30 * 60 * 1000;
 
@@ -61,12 +66,15 @@ function CountdownTimer({ endTime }) {
   );
 }
 
-function ProblemTopBar({ backTo, contestTitle, showContestTimer }) {
-  const [mockContestEndTime] = useState(() => Date.now() + 2 * 60 * 60 * 1000);
-
+function ProblemTopBar({
+  backTo,
+  contestTitle,
+  contestEndTime,
+  showContestTimer,
+}) {
   return (
-    <header className="relative flex h-12 shrink-0 items-center justify-between border-b border-[#e8e4dd] bg-white px-4">
-      <div className="absolute left-0 right-0 top-0 h-0.5 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-400" />
+    <header className="relative flex h-14 shrink-0 items-center justify-between border-b border-[#e8e4dd] bg-white px-4">
+      <div className="absolute top-0 right-0 left-0 h-0.5 bg-gradient-to-r from-amber-400 via-amber-500 to-orange-400" />
 
       <div className="flex items-center gap-3">
         <Link
@@ -79,7 +87,10 @@ function ProblemTopBar({ backTo, contestTitle, showContestTimer }) {
 
         <div className="h-5 w-px bg-slate-200" />
 
-        <Link to="/" className="flex items-center gap-2 transition hover:opacity-80">
+        <Link
+          to="/"
+          className="flex items-center gap-2 transition hover:opacity-80"
+        >
           <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-600 text-white shadow-sm">
             <Zap className="h-3.5 w-3.5" />
           </div>
@@ -97,7 +108,9 @@ function ProblemTopBar({ backTo, contestTitle, showContestTimer }) {
       </div>
 
       <div className="flex items-center gap-3">
-        {showContestTimer && <CountdownTimer endTime={mockContestEndTime} />}
+        {showContestTimer && contestEndTime && (
+          <CountdownTimer endTime={contestEndTime} />
+        )}
         <ProfileDropdown />
       </div>
     </header>
