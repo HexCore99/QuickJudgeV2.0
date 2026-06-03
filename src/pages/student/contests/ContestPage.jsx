@@ -30,6 +30,31 @@ import {
   verifyContestPassword,
 } from "../../../features/contests/contestsThunks";
 
+const STATUS_REFRESH_DELAY_MS = 1000;
+
+function getTimestamp(value) {
+  const timestamp = new Date(value).getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function getNextStatusBoundary(contests) {
+  const now = Date.now();
+  let nextBoundary = null;
+
+  for (const contest of contests) {
+    for (const value of [contest.startTime, contest.endTime]) {
+      const timestamp = getTimestamp(value);
+
+      if (timestamp && timestamp > now) {
+        nextBoundary =
+          nextBoundary === null ? timestamp : Math.min(nextBoundary, timestamp);
+      }
+    }
+  }
+
+  return nextBoundary;
+}
+
 function ContestPageHero({ search, setSearch }) {
   return (
     <section className="mb-8 flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
@@ -83,6 +108,27 @@ function ContestPage() {
     }
   }, [dispatch, hasFetched]);
 
+  useEffect(() => {
+    if (!hasFetched) {
+      return undefined;
+    }
+
+    const nextBoundary = getNextStatusBoundary([
+      ...liveContests,
+      ...upcomingContests,
+    ]);
+
+    if (!nextBoundary) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      dispatch(fetchContests());
+    }, Math.max(nextBoundary - Date.now(), 0) + STATUS_REFRESH_DELAY_MS);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [dispatch, hasFetched, liveContests, upcomingContests]);
+
   const query = search.trim().toLowerCase();
 
   const searchMatch = ({ name = "", desc = "", type = "", tags = [] }) => {
@@ -117,7 +163,7 @@ function ContestPage() {
       return;
     }
 
-    navigate(`/student/${contest.id}/problems`);
+    navigate(`/student/contests/${contest.id}/problems`);
   };
 
   const handlePasswordSubmit = async (e) => {
@@ -133,7 +179,7 @@ function ContestPage() {
         }),
       ).unwrap();
 
-      navigate(`/student/${passwordModal.contest.id}/problems`);
+      navigate(`/student/contests/${passwordModal.contest.id}/problems`);
     } catch {
       //
     }
