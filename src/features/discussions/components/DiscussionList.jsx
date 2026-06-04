@@ -2,8 +2,11 @@ import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { MessageSquarePlus, MessageCircle } from "lucide-react";
 import AppSearchInput from "../../../components/common/AppSearchInput";
-import { selectDiscussionList, selectSelectedId } from "../discussionSelectors";
-import { selectDiscussion, startCreating } from "../discussionSlice";
+import {
+  selectDiscussionList,
+  selectSelectedId,
+} from "../discussionsSelectors";
+import { selectDiscussion, startCreating } from "../discussionsSlice";
 
 function timeAgo(dateString) {
   const now = new Date();
@@ -17,7 +20,7 @@ function timeAgo(dateString) {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function DiscussionList() {
+export default function DiscussionList({ isLoading = false }) {
   const dispatch = useDispatch();
   const list = useSelector(selectDiscussionList);
   const selectedId = useSelector(selectSelectedId);
@@ -52,7 +55,11 @@ export default function DiscussionList() {
 
       {/* List */}
       <div className="flex-1 overflow-y-auto">
-        {filtered.length === 0 ? (
+        {isLoading ? (
+          <div className="px-4 py-12 text-center text-sm text-slate-400">
+            Loading discussions...
+          </div>
+        ) : filtered.length === 0 ? (
           <div className="px-4 py-12 text-center text-sm text-slate-400">
             {query
               ? "No discussions match your search."
