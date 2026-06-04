@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   Trash2,
@@ -13,8 +13,14 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
-
-const LOCAL_PROBLEMS_KEY = "qj_admin_problems";
+import StudentTopTabs from "../../../components/layout/StudentTopTabs";
+import AdminMoreMenu from "../../../components/common/AdminMoreMenu";
+import { getCurrentAdminNavTabs } from "../../../features/admin/adminNavTabs";
+import {
+  createProblemApi,
+  getMyProblemApi,
+  updateProblemApi,
+} from "../../../features/problems/problemsApi";
 
 const DIFFICULTIES = ["Easy", "Medium", "Hard"];
 const COMMON_TAGS = [
@@ -45,21 +51,9 @@ const initialFormValues = {
   memoryLimitMb: "256",
 };
 
-function getStoredProblems() {
-  try {
-    const savedProblems = localStorage.getItem(LOCAL_PROBLEMS_KEY);
-    return savedProblems ? JSON.parse(savedProblems) : [];
-  } catch {
-    return [];
-  }
-}
-
-function getLocalProblem(problemId) {
-  return getStoredProblems().find((problem) => String(problem.id) === problemId);
-}
-
 export default function CreateProblemPage() {
   const { problemId } = useParams();
+  const navigate = useNavigate();
   const isEditMode = Boolean(problemId);
 
   const [formValues, setFormValues] = useState(initialFormValues);
@@ -69,7 +63,9 @@ export default function CreateProblemPage() {
   const [newTag, setNewTag] = useState("");
   const [testCases, setTestCases] = useState([EMPTY_TEST_CASE]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState(null);
+  const [isPublished, setIsPublished] = useState(false);
 
   const allTags = useMemo(() => [...COMMON_TAGS, ...customTags], [customTags]);
 
@@ -78,47 +74,60 @@ export default function CreateProblemPage() {
       return undefined;
     }
 
-    setIsLoading(true);
-    setError(null);
+    let isCancelled = false;
 
-    try {
-      const problem = getLocalProblem(problemId);
+    async function loadProblem() {
+      setIsLoading(true);
+      setError(null);
 
-      if (!problem) {
-        throw new Error("Problem not found in local storage.");
+      try {
+        const problem = await getMyProblemApi(problemId);
+
+        if (isCancelled) {
+          return;
+        }
+
+        setFormValues({
+          title: problem.title || "",
+          statement: problem.statement || "",
+          inputFormat: problem.inputFormat || "",
+          outputFormat: problem.outputFormat || "",
+          constraints: problem.constraints || "",
+          points: String(problem.points || 100),
+          timeLimitSeconds: String(problem.timeLimitSeconds || 1),
+          memoryLimitMb: String(problem.memoryLimitMb || 256),
+        });
+        setDifficulty(problem.difficulty || "Medium");
+        setIsPublished(Boolean(problem.isPublished));
+
+        const problemTags = problem.tags || [];
+        setSelectedTags(problemTags);
+        setCustomTags(problemTags.filter((tag) => !COMMON_TAGS.includes(tag)));
+        setTestCases(
+          problem.testCases?.length
+            ? problem.testCases.map((testCase) => ({
+                input: testCase.input || "",
+                output: testCase.output || "",
+                isHidden: Boolean(testCase.isHidden),
+              }))
+            : [EMPTY_TEST_CASE],
+        );
+      } catch (err) {
+        if (!isCancelled) {
+          setError(err.message || "Failed to load problem.");
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
       }
-
-      setFormValues({
-        title: problem.title || "",
-        statement: problem.statement || "",
-        inputFormat: problem.inputFormat || "",
-        outputFormat: problem.outputFormat || "",
-        constraints: problem.constraints || "",
-        points: String(problem.points || 100),
-        timeLimitSeconds: String(problem.timeLimitSeconds || 1),
-        memoryLimitMb: String(problem.memoryLimitMb || 256),
-      });
-      setDifficulty(problem.difficulty || "Medium");
-
-      const problemTags = problem.tags || [];
-      setSelectedTags(problemTags);
-      setCustomTags(problemTags.filter((tag) => !COMMON_TAGS.includes(tag)));
-      setTestCases(
-        problem.testCases?.length
-          ? problem.testCases.map((testCase) => ({
-              input: testCase.input || "",
-              output: testCase.output || "",
-              isHidden: Boolean(testCase.isHidden),
-            }))
-          : [EMPTY_TEST_CASE],
-      );
-    } catch (err) {
-      setError(err.message || "Failed to load local problem.");
-    } finally {
-      setIsLoading(false);
     }
 
-    return undefined;
+    loadProblem();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [isEditMode, problemId]);
 
   const handleFieldChange = (field, value) => {
@@ -168,8 +177,60 @@ export default function CreateProblemPage() {
     );
   };
 
-  const handleSubmit = (e) => {
+  const buildPayload = () => ({
+    ...formValues,
+    title: formValues.title.trim(),
+    statement: formValues.statement.trim(),
+    inputFormat: formValues.inputFormat.trim(),
+    outputFormat: formValues.outputFormat.trim(),
+    constraints: formValues.constraints.trim(),
+    difficulty,
+    points: Number(formValues.points),
+    timeLimitSeconds: Number(formValues.timeLimitSeconds),
+    memoryLimitMb: Number(formValues.memoryLimitMb),
+    isPublished,
+    tags: selectedTags,
+    testCases: testCases
+      .map((testCase, index) => ({
+        input: testCase.input,
+        output: testCase.output,
+        isHidden: testCase.isHidden,
+        sortOrder: index,
+      }))
+      .filter((testCase) => testCase.input.trim() || testCase.output.trim()),
+  });
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setError(null);
+
+    if (!formValues.title.trim()) {
+      setError("Problem title is required.");
+      return;
+    }
+
+    if (!formValues.statement.trim()) {
+      setError("Problem statement is required.");
+      return;
+    }
+
+    setIsSaving(true);
+
+    try {
+      const payload = buildPayload();
+
+      if (isEditMode) {
+        await updateProblemApi(problemId, payload);
+      } else {
+        await createProblemApi(payload);
+      }
+
+      navigate("/admin/problems");
+    } catch (err) {
+      setError(err.message || "Failed to save problem.");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const inputClasses =
@@ -179,9 +240,15 @@ export default function CreateProblemPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
-      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-size-[24px_24px]" />
+      <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[length:24px_24px]" />
 
-      <div className="relative z-1">
+      <div className="relative z-[1]">
+        <StudentTopTabs
+          tabs={getCurrentAdminNavTabs({ end: true })}
+          logoTo="/"
+          navExtra={<AdminMoreMenu excludeAction="problem" />}
+        />
+
         <main className="mx-auto max-w-7xl px-6 py-8 pb-20">
           <Link
             to="/admin/problems"
@@ -201,18 +268,19 @@ export default function CreateProblemPage() {
               </p>
             </div>
             <div className="flex gap-3">
-              <button
-                type="button"
-                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-[13px] font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 cursor-pointer"
+              <Link
+                to="/admin/problems"
+                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-[13px] font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
               >
                 Cancel
-              </button>
+              </Link>
               <button
-                type="button"
-                disabled={isLoading}
-                className="rounded-xl bg-amber-600 px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                form="problem-form"
+                type="submit"
+                disabled={isSaving || isLoading}
+                className="rounded-xl bg-amber-600 px-6 py-2.5 text-[13px] font-semibold text-white shadow-sm transition hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Save Problem
+                {isSaving ? "Saving..." : "Save Problem"}
               </button>
             </div>
           </div>
@@ -523,6 +591,37 @@ export default function CreateProblemPage() {
                       );
                     })}
                   </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                  <h2 className="mb-4 text-[14px] font-semibold text-slate-800">
+                    Publication
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setIsPublished((current) => !current)}
+                    className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left transition ${
+                      isPublished
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                    }`}
+                  >
+                    {isPublished ? (
+                      <Eye className="mt-0.5 h-4 w-4 shrink-0" />
+                    ) : (
+                      <EyeOff className="mt-0.5 h-4 w-4 shrink-0" />
+                    )}
+                    <span>
+                      <span className="block text-[13px] font-semibold">
+                        {isPublished ? "Published" : "Unpublished"}
+                      </span>
+                      <span className="mt-1 block text-[12px] leading-5 opacity-80">
+                        {isPublished
+                          ? "Visible in the shared problem bank."
+                          : "Only you can manage it until it is published."}
+                      </span>
+                    </span>
+                  </button>
                 </div>
 
                 <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
