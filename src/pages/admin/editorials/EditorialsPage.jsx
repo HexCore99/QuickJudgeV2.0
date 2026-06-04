@@ -10,7 +10,12 @@ import {
 } from "lucide-react";
 import StudentTopTabs from "../../../components/layout/StudentTopTabs";
 import AdminMoreMenu from "../../../components/common/AdminMoreMenu";
-
+import { getCurrentAdminNavTabs } from "../../../features/admin/adminNavTabs";
+import {
+  getMyProblemsApi,
+  getProblemEditorialApi,
+  saveProblemEditorialApi,
+} from "../../../features/problems/problemsApi";
 
 export default function EditorialsPage() {
   const [problems, setProblems] = useState([]);
@@ -25,55 +30,36 @@ export default function EditorialsPage() {
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
 
+  useEffect(() => {
+    let isCancelled = false;
 
-// Mock Problems
-const MOCK_PROBLEMS = [
-  { id: 1, title: "Two Sum", hasEditorial: true },
-  { id: 2, title: "Longest Substring Without Repeating Characters", hasEditorial: false },
-  { id: 3, title: "Binary Search", hasEditorial: true },
-  { id: 4, title: "Merge Intervals", hasEditorial: false },
-];
+    async function loadProblems() {
+      setIsLoadingProblems(true);
+      setError(null);
 
-// Mock Editorials
-const MOCK_EDITORIALS = {
-  1: {
-    markdownContent: "## Intuition\nUse a hashmap to store visited numbers.",
-    codeContent: `function twoSum(nums, target) {
-  const map = new Map();
-  for (let i = 0; i < nums.length; i++) {
-    const diff = target - nums[i];
-    if (map.has(diff)) return [map.get(diff), i];
-    map.set(nums[i], i);
-  }
-}`,
-    videoLink: "https://youtube.com/watch?v=dQw4w9WgXcQ",
-  },
-  3: {
-    markdownContent: "## Binary Search\nDivide and conquer approach.",
-    codeContent: `function binarySearch(arr, target) {
-  let left = 0, right = arr.length - 1;
-  while (left <= right) {
-    let mid = Math.floor((left + right) / 2);
-    if (arr[mid] === target) return mid;
-    if (arr[mid] < target) left = mid + 1;
-    else right = mid - 1;
-  }
-  return -1;
-}`,
-    videoLink: "",
-  },
-};
+      try {
+        const items = await getMyProblemsApi();
 
+        if (!isCancelled) {
+          setProblems(items);
+        }
+      } catch (err) {
+        if (!isCancelled) {
+          setError(err.message || "Failed to load problems.");
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingProblems(false);
+        }
+      }
+    }
 
+    loadProblems();
 
-useEffect(() => {
-
-
-  setTimeout(() => {
-    setProblems(MOCK_PROBLEMS);
-    setIsLoadingProblems(false);
-  }, 500); // simulate API delay
-}, []);
+    return () => {
+      isCancelled = true;
+    };
+  }, []);
 
   const filteredProblems = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -83,31 +69,26 @@ useEffect(() => {
     );
   }, [problems, searchQuery]);
 
-const handleSelectProblem = async (problem) => {
-  setSelectedProblem(problem);
-  setMarkdownContent("");
-  setCodeContent("");
-  setVideoLink("");
-  setError(null);
-  setSuccessMessage(null);
-  setIsLoadingEditorial(true);
+  const handleSelectProblem = async (problem) => {
+    setSelectedProblem(problem);
+    setMarkdownContent("");
+    setCodeContent("");
+    setVideoLink("");
+    setError(null);
+    setSuccessMessage(null);
+    setIsLoadingEditorial(true);
 
-  setTimeout(() => {
-    const editorial = MOCK_EDITORIALS[problem.id];
-
-    if (editorial) {
-      setMarkdownContent(editorial.markdownContent);
-      setCodeContent(editorial.codeContent);
-      setVideoLink(editorial.videoLink);
-    } else {
-      setMarkdownContent("");
-      setCodeContent("");
-      setVideoLink("");
+    try {
+      const editorial = await getProblemEditorialApi(problem.id);
+      setMarkdownContent(editorial.markdownContent || "");
+      setCodeContent(editorial.codeContent || "");
+      setVideoLink(editorial.videoLink || "");
+    } catch (err) {
+      setError(err.message || "Failed to load editorial.");
+    } finally {
+      setIsLoadingEditorial(false);
     }
-
-    setIsLoadingEditorial(false);
-  }, 400);
-};
+  };
 
   const handleDiscard = () => {
     if (selectedProblem) {
@@ -115,42 +96,51 @@ const handleSelectProblem = async (problem) => {
     }
   };
 
-const handleSaveEditorial = async () => {
-  if (!selectedProblem) return;
+  const handleSaveEditorial = async () => {
+    if (!selectedProblem) {
+      return;
+    }
 
-  setIsSaving(true);
-  setError(null);
-  setSuccessMessage(null);
+    setIsSaving(true);
+    setError(null);
+    setSuccessMessage(null);
 
-  setTimeout(() => {
-    // Save into mock object
-    MOCK_EDITORIALS[selectedProblem.id] = {
-      markdownContent,
-      codeContent,
-      videoLink,
-    };
+    try {
+      await saveProblemEditorialApi(selectedProblem.id, {
+        markdownContent,
+        codeContent,
+        videoLink,
+      });
 
-    // Update UI state
-    setProblems((current) =>
-      current.map((p) =>
-        p.id === selectedProblem.id ? { ...p, hasEditorial: true } : p
-      )
-    );
-
-    setSelectedProblem((current) =>
-      current ? { ...current, hasEditorial: true } : current
-    );
-
-    setSuccessMessage("Editorial saved (mock).");
-    setIsSaving(false);
-  }, 600);
-};
+      setProblems((current) =>
+        current.map((problem) =>
+          problem.id === selectedProblem.id
+            ? { ...problem, hasEditorial: true }
+            : problem,
+        ),
+      );
+      setSelectedProblem((current) =>
+        current ? { ...current, hasEditorial: true } : current,
+      );
+      setSuccessMessage("Editorial saved.");
+    } catch (err) {
+      setError(err.message || "Failed to save editorial.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
       <div className="pointer-events-none fixed inset-0 z-0 bg-[radial-gradient(rgba(0,0,0,0.04)_1px,transparent_1px)] bg-[length:24px_24px]" />
 
-      <div className="relative z-1">
+      <div className="relative z-[1]">
+        <StudentTopTabs
+          tabs={getCurrentAdminNavTabs()}
+          logoTo="/"
+          navExtra={<AdminMoreMenu />}
+        />
+
         <main className="mx-auto max-w-7xl px-6 py-8 pb-20">
           <div className="mb-8">
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">
