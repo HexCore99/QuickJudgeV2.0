@@ -1,9 +1,27 @@
 import { Outlet, Navigate } from "react-router-dom";
 import StudentSidebar from "./StudentSidebar";
 
-function StudentLayout() {
+function getStoredUser() {
+  const token = localStorage.getItem("qj_token");
   const userString = localStorage.getItem("qj_user");
-  const user = userString ? JSON.parse(userString) : null;
+
+  if (!token || !userString) {
+    localStorage.removeItem("qj_token");
+    localStorage.removeItem("qj_user");
+    return null;
+  }
+
+  try {
+    return JSON.parse(userString);
+  } catch {
+    localStorage.removeItem("qj_token");
+    localStorage.removeItem("qj_user");
+    return null;
+  }
+}
+
+function StudentLayout() {
+  const user = getStoredUser();
 
   if (!user) return <Navigate to="/login" replace />;
   if (user.role !== "student") return <Navigate to="/admin/dashboard" replace />;
