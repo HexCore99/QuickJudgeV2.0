@@ -1,17 +1,20 @@
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { X, Send } from "lucide-react";
-import { createDiscussion, cancelCreating } from "../discussionSlice";
+import { cancelCreating } from "../discussionsSlice";
+import {
+  selectDiscussionsSaveError,
+  selectDiscussionsSaving,
+} from "../discussionsSelectors";
+import { createDiscussionThunk } from "../discussionsThunks";
 
-export default function DiscussionForm() {
+export default function CreateDiscussionForm() {
   const dispatch = useDispatch();
+  const isSaving = useSelector(selectDiscussionsSaving);
+  const saveError = useSelector(selectDiscussionsSaveError);
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [errors, setErrors] = useState({});
-
-  // Get current user from localStorage (matches existing auth pattern)
-  const userString = localStorage.getItem("qj_user");
-  const user = userString ? JSON.parse(userString) : { id: 1, name: "Guest" };
 
   function validate() {
     const newErrors = {};
@@ -30,14 +33,7 @@ export default function DiscussionForm() {
       return;
     }
 
-    dispatch(
-      createDiscussion({
-        title: title.trim(),
-        body: body.trim(),
-        authorId: user.id,
-        authorName: user.name,
-      }),
-    );
+    dispatch(createDiscussionThunk({ title: title.trim(), body: body.trim() }));
   }
 
   function handleCancel() {
@@ -119,6 +115,9 @@ export default function DiscussionForm() {
           {errors.body && (
             <p className="mt-1 text-xs text-red-500">{errors.body}</p>
           )}
+          {saveError && (
+            <p className="mt-2 text-xs text-red-500">{saveError}</p>
+          )}
         </div>
 
         {/* Actions */}
@@ -132,10 +131,11 @@ export default function DiscussionForm() {
           </button>
           <button
             type="submit"
-            className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-amber-700 hover:shadow-md active:scale-[0.98]"
+            disabled={isSaving}
+            className="inline-flex items-center gap-2 rounded-xl bg-amber-600 px-6 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-amber-700 hover:shadow-md active:scale-[0.98] disabled:opacity-50"
           >
             <Send className="h-3.5 w-3.5" />
-            Post Discussion
+            {isSaving ? "Posting..." : "Post Discussion"}
           </button>
         </div>
       </form>
