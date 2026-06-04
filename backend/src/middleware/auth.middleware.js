@@ -6,8 +6,8 @@ const ADMIN_ROLES = ["admin", "super_admin"];
 const SESSION_EXPIRED_MESSAGE =
   "Session expired because this account logged in somewhere else.";
 
+  // loads the token’s user from the database
 async function getActiveUserFromToken(decoded) {
-  await ensureUserSessionSchema();
 
   const [rows] = await pool.execute(
     `SELECT id, email, role, account_status, suspended_until, active_session_id

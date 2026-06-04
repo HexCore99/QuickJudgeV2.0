@@ -5,12 +5,8 @@ import crypto, { randomUUID } from "node:crypto";
 import { pool } from "../config/db.js";
 import { activateExpiredSuspensionForLogin } from "../services/adminUsers.service.js";
 import { recordAuditLogForRequest } from "../services/auditLog.service.js";
-import { ensurePasswordResetTokenSchema } from "../services/passwordReset.service.js";
 import { ensureUserSessionSchema } from "../services/userSession.service.js";
-import {
-  ensureUserHandleSchema,
-  insertUserWithUniqueHandle,
-} from "../services/userHandle.service.js";
+import { insertUserWithUniqueHandle } from "../services/userHandle.service.js";
 import sendPasswordResetEmail from "../utils/mailer.js";
 
 const PASSWORD_RESET_SUCCESS_MESSAGE =
@@ -78,6 +74,7 @@ export async function signup(req, res) {
   const password = req.body?.password;
 
   try {
+    // save signup error log
     if (!name || !email || !password) {
       await recordAuditLogForRequest(req, {
         actorEmail: email || null,
@@ -94,7 +91,7 @@ export async function signup(req, res) {
         message: "Name,email and password are required",
       });
     }
-
+    // save password length error log
     if (typeof password !== "string" || password.length < 6) {
       await recordAuditLogForRequest(req, {
         actorEmail: email,
@@ -112,7 +109,6 @@ export async function signup(req, res) {
       });
     }
 
-    await ensureUserHandleSchema();
     await ensureUserSessionSchema();
 
     const [existingUsers] = await pool.execute(
@@ -120,6 +116,7 @@ export async function signup(req, res) {
       [email],
     );
 
+    // save email already exist log
     if (existingUsers.length > 0) {
       await recordAuditLogForRequest(req, {
         actorEmail: email,
@@ -136,6 +133,7 @@ export async function signup(req, res) {
         message: "Email already exists",
       });
     }
+
     const passwordHash = await bcrypt.hash(password, 10);
     const sessionId = randomUUID();
     const connection = await pool.getConnection();
@@ -149,6 +147,7 @@ export async function signup(req, res) {
         passwordHash,
         role: "student",
       });
+      // saves the newly created login session ID
       await connection.execute(
         `UPDATE users
          SET active_session_id = ?
@@ -173,6 +172,7 @@ export async function signup(req, res) {
     };
     const token = createToken(user, sessionId);
 
+    // record successful account created log
     await recordAuditLogForRequest(req, {
       actorUserId: user.id,
       actorEmail: user.email,
@@ -237,7 +237,6 @@ export async function login(req, res) {
       });
     }
 
-    await ensureUserHandleSchema();
     await ensureUserSessionSchema();
 
     const [users] = await pool.execute(
@@ -330,6 +329,7 @@ export async function login(req, res) {
       });
     }
 
+    // successfull login part
     const user = {
       id: foundUser.id,
       name: foundUser.name,
@@ -402,13 +402,12 @@ export async function forgotPassword(req, res) {
       });
     }
 
-    await ensurePasswordResetTokenSchema();
-
     const [users] = await pool.execute(
       "SELECT id, email FROM users WHERE email = ? LIMIT 1",
       [email],
     );
 
+    // creates a secure password reset token
     if (users.length > 0) {
       const user = users[0];
       const rawToken = crypto.randomBytes(32).toString("hex");
@@ -463,7 +462,6 @@ export async function resetPassword(req, res) {
     }
 
     const tokenHash = hashResetToken(token);
-    await ensurePasswordResetTokenSchema();
 
     const connection = await pool.getConnection();
 

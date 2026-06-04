@@ -8,6 +8,7 @@ function createServiceError(message, statusCode = 400) {
   return error;
 }
 
+// create table if missing
 async function createProblemTables() {
   await pool.execute(`
     CREATE TABLE IF NOT EXISTS problems (
@@ -91,6 +92,7 @@ async function createProblemTables() {
   }
 }
 
+// problem table handler
 export async function ensureProblemTables() {
   if (!problemTablesReadyPromise) {
     problemTablesReadyPromise = createProblemTables();
@@ -99,6 +101,7 @@ export async function ensureProblemTables() {
   return problemTablesReadyPromise;
 }
 
+// [" dp ", "graphs", "", "dp", " math "] -> ["dp", "graphs", "math"]
 function normalizeTags(tags = []) {
   return [
     ...new Set(
@@ -166,12 +169,14 @@ function mapEditorialRow(row) {
   };
 }
 
+// groups tag rows by problem_id
 async function getTagsByProblemIds(problemIds) {
   if (!problemIds.length) {
     return {};
   }
 
   const placeholders = problemIds.map(() => "?").join(",");
+  // fetch tags and id from <problem_tags>
   const [rows] = await pool.execute(
     `SELECT problem_id, tag_name
      FROM problem_tags
@@ -258,6 +263,7 @@ export async function getProblemsForAuthor(authorId) {
   return rows.map((row) => mapProblemRow(row, tagsByProblemId[row.id] || []));
 }
 
+// fetch the problems which are public
 export async function getProblemBankItems() {
   await ensureProblemTables();
 
@@ -275,6 +281,7 @@ export async function getProblemBankItems() {
   return rows.map((row) => mapProblemRow(row, tagsByProblemId[row.id] || []));
 }
 
+// fetch specific problem details for author
 export async function getProblemForAuthor(authorId, problemId) {
   await ensureProblemTables();
 
@@ -308,6 +315,7 @@ export async function getProblemForAuthor(authorId, problemId) {
   };
 }
 
+// fetch specific problem details available in ProblemBank
 export async function getProblemBankItemById(problemId) {
   await ensureProblemTables();
 
@@ -341,9 +349,11 @@ export async function getProblemBankItemById(problemId) {
   };
 }
 
+// fetches a problem that an admin is allowed to clone
 export async function getProblemCloneSourceForAdmin(adminId, problemId) {
   await ensureProblemTables();
 
+  // fetch public or owned problem.
   const [rows] = await pool.execute(
     `SELECT id, author_id, title, statement, input_format, output_format,
             constraints_text, difficulty, points, time_limit_seconds,
@@ -358,6 +368,7 @@ export async function getProblemCloneSourceForAdmin(adminId, problemId) {
     throw createServiceError("Problem not found.", 404);
   }
 
+  // this part fetches the selected problem’s tags and test cases
   const problemIdNumber = rows[0].id;
   const tagsByProblemId = await getTagsByProblemIds([problemIdNumber]);
   const [testCaseRows] = await pool.execute(
@@ -374,6 +385,7 @@ export async function getProblemCloneSourceForAdmin(adminId, problemId) {
   };
 }
 
+// creates a new problem, saves its tags and test cases inside one transaction, then returns the full saved problem.
 export async function createProblemForAuthor(authorId, payload) {
   await ensureProblemTables();
 
@@ -423,6 +435,7 @@ export async function createProblemForAuthor(authorId, payload) {
   }
 }
 
+// update problem owned by author
 export async function updateProblemForAuthor(authorId, problemId, payload) {
   await ensureProblemTables();
 
@@ -483,7 +496,7 @@ export async function updateProblemForAuthor(authorId, problemId, payload) {
     connection.release();
   }
 }
-
+//publishes or unpublishes one problem owned by author
 export async function updateProblemPublicationForAuthor(
   authorId,
   problemId,
