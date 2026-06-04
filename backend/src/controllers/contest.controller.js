@@ -62,6 +62,7 @@ export function getContestQueryTarget(
   };
 }
 
+// writes an audit log entry for a contest-related action.
 export async function auditContestAction(req, action, status, target, message) {
   await recordAuditLogForRequest(req, {
     action,
@@ -101,6 +102,7 @@ export async function getContestDetails(req, res) {
       req.user.role,
     );
 
+    // records that a user opened/entered a contest session.
     await recordContestSessionActivity(req, {
       contestId,
       userId: req.user.id,
@@ -122,6 +124,8 @@ export async function getContestDetails(req, res) {
     );
   }
 }
+
+// fetches one problem inside a contest and records contest activity.
 
 export async function getContestProblem(req, res) {
   try {
@@ -171,6 +175,7 @@ export async function getContestProblem(req, res) {
   }
 }
 
+// registers the current user for an upcoming contest
 export async function registerContest(req, res) {
   try {
     const contestId = req.params.contestId;
@@ -279,6 +284,7 @@ export async function verifyContestPassword(req, res) {
   }
 }
 
+// fetches contest submissions for the current user/admin.
 export async function getSubmissions(req, res) {
   try {
     const { contestId } = req.params;
@@ -298,6 +304,7 @@ export async function getSubmissions(req, res) {
   }
 }
 
+// fetches the leaderboard for one contest.
 export async function getLeaderboard(req, res) {
   try {
     const { contestId } = req.params;
@@ -343,6 +350,7 @@ export async function getQueries(req, res) {
   }
 }
 
+// ets a user submit a question/query for a contest
 export async function postQuery(req, res) {
   try {
     const { contestId } = req.params;

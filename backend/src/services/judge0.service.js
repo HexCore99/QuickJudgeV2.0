@@ -20,6 +20,7 @@ function decodeBase64(value) {
   return Buffer.from(value, "base64").toString("utf8");
 }
 
+// takes a Judge0 result object and decodes its base64 text fields like stdout, stderr, and compile_output
 function decodeJudge0TextFields(result) {
   if (!result || typeof result !== "object") {
     return result;
@@ -83,6 +84,7 @@ export function getLanguageId(language) {
   return LANGUAGE_IDS[language] || null;
 }
 
+// sends code to Judge0, waits until Judge0 finishes judging it, then returns the decoded result
 export async function runJudge0Submission({
   language,
   sourceCode,
@@ -112,8 +114,7 @@ export async function runJudge0Submission({
       }),
     },
   );
-  const created = await parseJudge0Response(createResponse);
-
+  const created = await parseJudge0Response(createResponse); 
   if (!created.token) {
     return decodeJudge0TextFields(created);
   }

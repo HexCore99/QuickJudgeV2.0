@@ -17,7 +17,9 @@ const AVATAR_EXTENSION_BY_MIME = {
   "image/gif": "gif",
 };
 
+// alidates an uploaded avatar data URL, converts it into binary image data
 function parseAvatarImageData(imageData) {
+  // this checks whether imageData is a valid base64 image string
   const match = String(imageData || "").match(
     /^data:(image\/(?:jpeg|png|webp|gif));base64,([A-Za-z0-9+/=]+)$/i,
   );
@@ -40,7 +42,7 @@ function parseAvatarImageData(imageData) {
 
   return { buffer, extension };
 }
-
+// safely converts a local avatar URL into an actual filesystem path
 export function getAvatarFilePathFromUrl(avatarUrl) {
   const cleanedUrl = String(avatarUrl || "")
     .trim()
@@ -64,7 +66,7 @@ export function getAvatarFilePathFromUrl(avatarUrl) {
   const filePath = path.resolve(AVATAR_UPLOAD_DIR, safeFileName);
   const relativePath = path.relative(AVATAR_UPLOAD_DIR, filePath);
 
-  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
+  if (relativePath.startsWith("..")) {
     return null;
   }
 

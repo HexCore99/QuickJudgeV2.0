@@ -31,6 +31,7 @@ function mapPostRow(row, replies = []) {
   };
 }
 
+// fetches replies for multiple discussions and groups them by discussion_id
 async function getRepliesByDiscussionIds(discussionIds) {
   if (!discussionIds.length) {
     return {};
@@ -82,6 +83,7 @@ async function ensureDiscussionOwner(userId, userRole, discussionId) {
   }
 }
 
+// checks whether a reply exists and whether the current user is allowed to edit/delete it.
 async function ensureReplyOwner(userId, userRole, discussionId, replyId) {
   const [rows] = await pool.execute(
     `SELECT author_id
@@ -100,6 +102,7 @@ async function ensureReplyOwner(userId, userRole, discussionId, replyId) {
   }
 }
 
+// checks that a reply’s parent reply exists inside the same discussion
 async function ensureParentReplyBelongsToDiscussion(parentReplyId, discussionId) {
   if (!parentReplyId) {
     return;
@@ -118,6 +121,7 @@ async function ensureParentReplyBelongsToDiscussion(parentReplyId, discussionId)
   }
 }
 
+// fetches all discussion posts with their author names and replies
 export async function getDiscussions() {
   const [rows] = await pool.execute(
     `SELECT
@@ -141,6 +145,7 @@ export async function getDiscussions() {
     mapPostRow(row, repliesByDiscussionId[row.id] || []),
   );
 }
+
 
 export async function getDiscussionById(discussionId) {
   const [rows] = await pool.execute(

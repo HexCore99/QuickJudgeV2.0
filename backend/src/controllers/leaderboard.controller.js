@@ -1,6 +1,7 @@
 import { getGlobalLeaderboard } from "../services/leaderboard.service.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 
+// handles the API request for fetching the global leaderboard.
 export async function getLeaderboard(req, res) {
   try {
     const items = await getGlobalLeaderboard({

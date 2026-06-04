@@ -20,7 +20,7 @@ export async function getProfile(req, res) {
 
 export async function updateProfile(req, res) {
   try {
-    const validationError = validateProfilePayload(req.body);
+    const validationError = validateProfilePayload(req.body); // check if payload is valid
 
     if (validationError) {
       return errorResponse(res, 400, validationError);

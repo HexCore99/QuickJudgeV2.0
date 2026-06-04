@@ -1,6 +1,5 @@
 import { pool } from "../../config/db.js";
 import { ensureProblemTables } from "../problem.service.js";
-import { ensureUserHandleSchema } from "../userHandle.service.js";
 import {
   DIFFICULTY_META,
   buildRatingHistory,
@@ -16,6 +15,7 @@ import {
   getUserRow,
 } from "./shared.service.js";
 
+// calculates a user’s submission totals, accepted submissions, and unique solved problem count.
 async function getSubmissionStats(userId) {
   const [rows] = await pool.execute(
     `SELECT
@@ -42,6 +42,7 @@ async function getSubmissionStats(userId) {
   );
 }
 
+//fetches the latest 50 submissions for one user. 
 async function getSubmissions(userId) {
   const [rows] = await pool.execute(
     `SELECT id, problem_id, contest_id, contest_problem_code, problem_title,
@@ -81,6 +82,7 @@ function mapCountRows(rows, valueKey) {
   }, new Map());
 }
 
+// returns the contest IDs where a user has scored submissions.
 async function getParticipatedContestIds(userId) {
   const [rows] = await pool.execute(
     `SELECT contest_id
@@ -96,6 +98,7 @@ async function getParticipatedContestIds(userId) {
   return rows.map((row) => row.contest_id).filter(Boolean);
 }
 
+// fetches contest details for a list of contest IDs
 async function getContestRowsByIds(contestIds, userId) {
   if (!contestIds.length) {
     return [];
@@ -127,6 +130,7 @@ async function getContestRowsByIds(contestIds, userId) {
   return rows;
 }
 
+// counts how many unique users participated in each contest.
 async function getParticipantCountsByContestIds(contestIds) {
   if (!contestIds.length) {
     return new Map();
@@ -151,6 +155,7 @@ async function getParticipantCountsByContestIds(contestIds) {
   return mapCountRows(rows, "total_participants");
 }
 
+// Map where each contest ID points to how many problems that user solved in that contest.
 async function getSolvedCountsByContestIds(userId, contestIds) {
   if (!contestIds.length) {
     return new Map();
@@ -182,6 +187,7 @@ async function getSolvedCountsByContestIds(userId, contestIds) {
   return mapCountRows(rows, "solved_count");
 }
 
+// counts how many problems each contest has.
 async function getProblemCountsByContestIds(contestIds) {
   if (!contestIds.length) {
     return new Map();
@@ -198,7 +204,7 @@ async function getProblemCountsByContestIds(contestIds) {
 
   return mapCountRows(rows, "total_problems");
 }
-
+// builds the contest history shown on a user profile by combining saved contest history and live participation data.
 async function getContests(userId) {
   const [historyRows] = await pool.execute(
     `SELECT id, contest_code, contest_name, contest_date, rank_position,
@@ -270,6 +276,7 @@ async function getContests(userId) {
     .map(mapContest);
 }
 
+// fetches a user’s rating changes over time and formats them for the profile chart.
 async function getRatingHistory(userId) {
   const [rows] = await pool.execute(
     `SELECT rating_date, rating, label
@@ -282,6 +289,7 @@ async function getRatingHistory(userId) {
   return buildRatingHistory(rows);
 }
 
+// calculates how many published problems exist per difficulty and how many of those the user solved.
 async function getDifficultyStats(userId) {
   await ensureProblemTables();
 
@@ -336,9 +344,8 @@ async function getActivities(userId) {
   return rows.map(mapActivity);
 }
 
+// builds the full profile response for the frontend.
 export async function getProfileForUser(userId) {
-  await ensureUserHandleSchema();
-
   const user = await getUserRow(userId);
   await ensureProfileRow(user);
 

@@ -65,6 +65,7 @@ export async function getProblemBank(req, res) {
   }
 }
 
+// request for fetching one public problem-bank problem by ID
 export async function getProblemBankProblem(req, res) {
   try {
     const { problemId } = req.params;
@@ -86,6 +87,7 @@ export async function getProblemBankProblem(req, res) {
   }
 }
 
+// fetch a problem’s full data so it can be cloned.
 export async function getProblemCloneSource(req, res) {
   try {
     const { problemId } = req.params;
@@ -344,6 +346,7 @@ export async function saveProblemEditorial(req, res) {
   }
 }
 
+// publishes or unpublishes a problem and writes audit logs
 export async function updateProblemPublication(req, res) {
   try {
     const { problemId } = req.params;

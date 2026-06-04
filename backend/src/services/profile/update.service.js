@@ -1,10 +1,6 @@
 import bcrypt from "bcrypt";
 import { pool } from "../../config/db.js";
 import {
-  assignUserHandleFromName,
-  ensureUserHandleSchema,
-} from "../userHandle.service.js";
-import {
   deleteAvatarFileSafely,
   getAvatarFilePathFromUrl,
 } from "./avatar.service.js";
@@ -17,8 +13,6 @@ import {
 } from "./shared.service.js";
 
 export async function updateProfileForUser(userId, payload) {
-  await ensureUserHandleSchema();
-
   const user = await getUserRow(userId);
   await ensureProfileRow(user);
 
@@ -33,6 +27,7 @@ export async function updateProfileForUser(userId, payload) {
   const avatarUrl = payload.avatarUrl?.trim() || null;
   const currentPassword = payload.currentPassword || "";
   const newPassword = payload.newPassword || "";
+  const isNameChanging = name !== String(user.name || "").trim();
   const isEmailChanging = email !== user.email;
   const isPasswordChanging = Boolean(newPassword);
 
@@ -48,7 +43,7 @@ export async function updateProfileForUser(userId, payload) {
     );
     previousAvatarUrl = profileRows[0]?.avatar_url || "";
 
-    if (isEmailChanging || isPasswordChanging) {
+    if (isNameChanging || isEmailChanging || isPasswordChanging) {
       const isCurrentPasswordValid = await bcrypt.compare(
         currentPassword,
         user.password_hash || "",
@@ -89,8 +84,6 @@ export async function updateProfileForUser(userId, payload) {
         [name, email, userId],
       );
     }
-
-    await assignUserHandleFromName(connection, userId, name);
 
     await connection.execute(
       `INSERT INTO user_profiles
