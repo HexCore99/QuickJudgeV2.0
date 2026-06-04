@@ -1,82 +1,107 @@
 import { useEffect } from "react";
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import { MessageSquare } from "lucide-react";
 import StudentTopTabs from "../../../components/layout/StudentTopTabs";
-import DiscussionDetails from "../../../features/discussion/components/DiscussionDetails";
-import DiscussionForm from "../../../features/discussion/components/DiscussionForm";
-import DiscussionList from "../../../features/discussion/components/DiscussionList";
-import EmptyState from "../../../features/discussion/components/EmptyState";
+import DiscussionList from "../../../features/discussions/components/DiscussionList";
+import DiscussionDetail from "../../../features/discussions/components/DiscussionDetail";
+import CreateDiscussionForm from "../../../features/discussions/components/CreateDiscussionForm";
+import EmptyState from "../../../features/discussions/components/EmptyState";
 import {
-  selectActiveDiscussion,
-  selectDiscussionError,
-  selectDiscussionHasFetched,
-  selectDiscussionIsCreating,
-  selectDiscussionLoading,
-} from "../../../features/discussion/discussionSelectors";
-import { startCreating } from "../../../features/discussion/discussionSlice";
-import { fetchDiscussions } from "../../../features/discussion/discussionThunks";
+  selectDiscussionsError,
+  selectDiscussionsLoading,
+  selectMode,
+} from "../../../features/discussions/discussionsSelectors";
+import { startCreating } from "../../../features/discussions/discussionsSlice";
+import { fetchDiscussions } from "../../../features/discussions/discussionsThunks";
 
 export default function DiscussionPage() {
   const dispatch = useDispatch();
-  const activeDiscussion = useSelector(selectActiveDiscussion);
-  const isCreating = useSelector(selectDiscussionIsCreating);
-  const isLoading = useSelector(selectDiscussionLoading);
-  const hasFetched = useSelector(selectDiscussionHasFetched);
-  const error = useSelector(selectDiscussionError);
+  const mode = useSelector(selectMode);
+  const isLoading = useSelector(selectDiscussionsLoading);
+  const error = useSelector(selectDiscussionsError);
 
   useEffect(() => {
-    if (!hasFetched && !isLoading) {
-      dispatch(fetchDiscussions());
+    dispatch(fetchDiscussions());
+  }, [dispatch]);
+
+  function renderRightPanel() {
+    switch (mode) {
+      case "creating":
+        return <CreateDiscussionForm />;
+      case "viewing":
+        return <DiscussionDetail />;
+      default:
+        return <EmptyState onCreateClick={() => dispatch(startCreating())} />;
     }
-  }, [dispatch, hasFetched, isLoading]);
-
-  let content = <EmptyState onCreateClick={() => dispatch(startCreating())} />;
-
-  if (isLoading && !hasFetched) {
-    content = (
-      <div className="flex h-full items-center justify-center px-8 py-20 text-sm text-slate-400">
-        Loading discussions...
-      </div>
-    );
-  } else if (isCreating) {
-    content = <DiscussionForm />;
-  } else if (activeDiscussion) {
-    content = <DiscussionDetails />;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900">
-      <StudentTopTabs logoTo="/" />
+    <div className="flex min-h-screen flex-col bg-white text-slate-900">
+      <StudentTopTabs
+        tabs={[
+          { key: "Problems", to: "/student/problems" },
+          { key: "Contests", to: "/student/contests" },
+          { key: "Leaderboard", to: "/student/leaderboard" },
+          { key: "Discuss", to: "/student/discuss" },
+        ]}
+        logoTo="/"
+      />
 
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        <section className="mb-7 flex items-start gap-3">
-          <div className="mt-1 flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-200/90 bg-amber-50/70 text-amber-700 shadow-sm">
-            <MessageSquare className="h-4.5 w-4.5" />
-          </div>
-          <div>
-            <h1 className="text-[42px] leading-none font-bold tracking-tight text-slate-800 md:text-[52px]">
-              Discussion
-            </h1>
-            <p className="mt-1.5 text-[14px] font-medium text-slate-500 md:text-[15px]">
-              Ask questions, compare approaches, and help the community learn.
-            </p>
+      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 py-8">
+        {/* Hero */}
+        <section className="mb-6">
+          <div className="flex items-start gap-3">
+            <div className="mt-1 flex h-11 w-11 items-center justify-center rounded-2xl border border-amber-200/90 bg-amber-50/70 text-amber-700 shadow-sm">
+              <MessageSquare className="h-4.5 w-4.5" />
+            </div>
+            <div>
+              <h1 className="text-[48px] leading-none font-bold tracking-[-0.04em] text-slate-800 md:text-[56px]">
+                Discussions
+              </h1>
+              <p className="mt-1.5 text-[14px] font-medium tracking-[0.01em] text-slate-500 md:text-[15px]">
+                Join or start a conversation with the community
+              </p>
+            </div>
           </div>
         </section>
 
+        {/* Split Panel */}
         {error && (
-          <div className="mb-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
             {error}
           </div>
         )}
 
-        <section className="grid overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm lg:h-[calc(100vh-205px)] lg:min-h-[620px] lg:grid-cols-[360px_minmax(0,1fr)]">
-          <aside className="min-h-[360px] border-b border-slate-200 bg-white lg:min-h-0 lg:border-r lg:border-b-0">
-            <DiscussionList />
-          </aside>
+        <div className="flex flex-1 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+          {/* Left — Discussion List */}
+          <div className="w-[340px] shrink-0 border-r border-slate-200/80 bg-slate-50/60">
+            <DiscussionList isLoading={isLoading} />
+          </div>
 
-          <div className="min-h-[520px] bg-white lg:min-h-0">{content}</div>
-        </section>
+          {/* Right — Detail / Create / Empty */}
+          <div className="flex min-w-0 flex-1 flex-col">
+            {renderRightPanel()}
+          </div>
+        </div>
       </main>
+
+      {/* Footer */}
+      <footer className="mt-12 border-t border-black/7 py-6">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 text-xs text-slate-500 md:flex-row">
+          <span>QuickJudge V2.0 — Built for competitive learners</span>
+          <div className="flex gap-4">
+            <a href="#" className="transition-colors hover:text-slate-800">
+              Documentation
+            </a>
+            <a href="#" className="transition-colors hover:text-slate-800">
+              API
+            </a>
+            <a href="#" className="transition-colors hover:text-slate-800">
+              Support
+            </a>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
