@@ -11,7 +11,10 @@ import SettingsPanel from "../../../features/profile/components/SettingsPanel";
 import SubmissionSlidePanel from "../../../features/profile/components/SubmissionSlidePanel";
 import SubmissionsPanel from "../../../features/profile/components/SubmissionsPanel";
 import ToastContainer from "../../../features/profile/components/Toast";
-import { uploadProfileAvatarApi } from "../../../features/profile/profileApi";
+import {
+  getProfileSubmissionsApi,
+  uploadProfileAvatarApi,
+} from "../../../features/profile/profileApi";
 import {
   selectProfileContests,
   selectProfileDifficulties,
@@ -28,7 +31,20 @@ import {
   saveProfile,
 } from "../../../features/profile/profileThunks";
 
-const profileTabs = new Set(["overview", "submissions", "contests", "settings"]);
+const profileTabs = new Set([
+  "overview",
+  "submissions",
+  "contests",
+  "settings",
+]);
+const PROFILE_SUBMISSIONS_PAGE_SIZE = 10;
+const DEFAULT_SUBMISSIONS_PAGINATION = {
+  page: 1,
+  limit: PROFILE_SUBMISSIONS_PAGE_SIZE,
+  totalItems: 0,
+  totalPages: 1,
+  filter: "all",
+};
 let toastIdCounter = 0;
 
 function getProfileTab(searchParams) {
@@ -56,11 +72,24 @@ export default function ProfilePage() {
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [slideSubmission, setSlideSubmission] = useState(null);
   const [slideOpen, setSlideOpen] = useState(false);
+  const [profileSubmissions, setProfileSubmissions] = useState([]);
+  const [submissionPage, setSubmissionPage] = useState(1);
+  const [submissionFilter, setSubmissionFilter] = useState("all");
+  const [submissionPagination, setSubmissionPagination] = useState(
+    DEFAULT_SUBMISSIONS_PAGINATION,
+  );
+  const [isLoadingSubmissions, setIsLoadingSubmissions] = useState(false);
+  const [submissionsError, setSubmissionsError] = useState(null);
   const [toasts, setToasts] = useState([]);
   const hasRequestedProfileRef = useRef(false);
 
   useEffect(() => {
     hasRequestedProfileRef.current = false;
+    setProfileSubmissions([]);
+    setSubmissionPage(1);
+    setSubmissionFilter("all");
+    setSubmissionPagination(DEFAULT_SUBMISSIONS_PAGINATION);
+    setSubmissionsError(null);
   }, [authUserId]);
 
   useEffect(() => {
@@ -74,6 +103,51 @@ export default function ProfilePage() {
       dispatch(fetchProfile());
     }
   }, [authUserId, dispatch, hasFetched, isLoading]);
+
+  useEffect(() => {
+    if (activeTab !== "submissions" || !authUserId) {
+      return undefined;
+    }
+
+    let isCancelled = false;
+
+    async function loadProfileSubmissions() {
+      setIsLoadingSubmissions(true);
+      setSubmissionsError(null);
+
+      try {
+        const result = await getProfileSubmissionsApi({
+          page: submissionPage,
+          limit: PROFILE_SUBMISSIONS_PAGE_SIZE,
+          filter: submissionFilter,
+        });
+
+        if (!isCancelled) {
+          setProfileSubmissions(result.items);
+          setSubmissionPagination(
+            result.pagination || DEFAULT_SUBMISSIONS_PAGINATION,
+          );
+        }
+      } catch (error) {
+        if (!isCancelled) {
+          setProfileSubmissions([]);
+          setSubmissionsError(
+            error.message || "Failed to fetch profile submissions.",
+          );
+        }
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingSubmissions(false);
+        }
+      }
+    }
+
+    loadProfileSubmissions();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [activeTab, authUserId, submissionPage, submissionFilter]);
 
   const toast = useCallback((msg, type = "info") => {
     const id = ++toastIdCounter;
@@ -90,6 +164,11 @@ export default function ProfilePage() {
     },
     [setSearchParams],
   );
+
+  const handleSubmissionFilterChange = useCallback((nextFilter) => {
+    setSubmissionFilter(nextFilter);
+    setSubmissionPage(1);
+  }, []);
 
   async function handleShare() {
     try {
@@ -138,8 +217,11 @@ export default function ProfilePage() {
   }
 
   function openSubmission(index) {
-    if (index >= 0 && index < submissions.length) {
-      setSlideSubmission(submissions[index]);
+    const source =
+      activeTab === "submissions" ? profileSubmissions : submissions;
+
+    if (index >= 0 && index < source.length) {
+      setSlideSubmission(source[index]);
       setSlideOpen(true);
     }
   }
@@ -235,12 +317,19 @@ export default function ProfilePage() {
 
             {activeTab === "submissions" ? (
               <SubmissionsPanel
-                submissions={submissions}
-                allSubmissions={submissions}
+                submissions={profileSubmissions}
+                allSubmissions={profileSubmissions}
                 onOpenSubmission={openSubmission}
                 onProblemClick={openProblem}
                 onToast={toast}
-                totalCount={user.totalSubmissions}
+                totalCount={submissionPagination.totalItems}
+                filterValue={submissionFilter}
+                onFilterChange={handleSubmissionFilterChange}
+                useExternalFilter
+                isLoading={isLoadingSubmissions}
+                error={submissionsError}
+                pagination={submissionPagination}
+                onPageChange={setSubmissionPage}
               />
             ) : null}
 

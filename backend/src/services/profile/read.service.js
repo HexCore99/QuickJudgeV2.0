@@ -15,6 +15,60 @@ import {
   getUserRow,
 } from "./shared.service.js";
 
+const PROFILE_SUBMISSIONS_DEFAULT_LIMIT = 10;
+const PROFILE_SUBMISSIONS_MAX_LIMIT = 100;
+const PROFILE_SUBMISSION_FILTERS = new Set(["all", "ac", "wa", "other"]);
+
+function toPositiveInteger(value, fallback) {
+  const numberValue = Number(value);
+
+  if (!Number.isInteger(numberValue) || numberValue <= 0) {
+    return fallback;
+  }
+
+  return numberValue;
+}
+
+function normalizeSubmissionListOptions(options = {}) {
+  const hasPagination =
+    options.page !== undefined || options.limit !== undefined;
+  const page = toPositiveInteger(options.page, 1);
+  const limit = Math.min(
+    toPositiveInteger(options.limit, PROFILE_SUBMISSIONS_DEFAULT_LIMIT),
+    PROFILE_SUBMISSIONS_MAX_LIMIT,
+  );
+  const requestedFilter = String(options.filter || "all").toLowerCase();
+  const filter = PROFILE_SUBMISSION_FILTERS.has(requestedFilter)
+    ? requestedFilter
+    : "all";
+
+  return {
+    hasPagination,
+    page,
+    limit,
+    offset: (page - 1) * limit,
+    filter,
+  };
+}
+
+function buildSubmissionListFilters(userId, options) {
+  const conditions = ["user_id = ?"];
+  const values = [userId];
+
+  if (options.filter === "ac") {
+    conditions.push("verdict = 'AC'");
+  } else if (options.filter === "wa") {
+    conditions.push("verdict = 'WA'");
+  } else if (options.filter === "other") {
+    conditions.push("verdict NOT IN ('AC', 'WA')");
+  }
+
+  return {
+    whereClause: `WHERE ${conditions.join(" AND ")}`,
+    values,
+  };
+}
+
 // calculates a user’s submission totals, accepted submissions, and unique solved problem count.
 async function getSubmissionStats(userId) {
   const [rows] = await pool.execute(
@@ -42,20 +96,57 @@ async function getSubmissionStats(userId) {
   );
 }
 
-//fetches the latest 50 submissions for one user. 
-async function getSubmissions(userId) {
-  const [rows] = await pool.execute(
-    `SELECT id, problem_id, contest_id, contest_problem_code, problem_title,
+async function getSubmissionList(userId, options = {}) {
+  const listOptions = normalizeSubmissionListOptions(options);
+  const filters = buildSubmissionListFilters(userId, listOptions);
+  const listValues = [...filters.values];
+  let listSql = `SELECT id, problem_id, contest_id, contest_problem_code, problem_title,
             contest_name, language, source_code, verdict, runtime_ms,
             memory_kb, test_case_note, is_scored, submitted_at
      FROM submissions
-     WHERE user_id = ?
-     ORDER BY submitted_at DESC, id DESC
-     LIMIT 50`,
-    [userId],
-  );
+     ${filters.whereClause}
+     ORDER BY submitted_at DESC, id DESC`;
 
-  return rows.map(mapSubmission);
+  if (listOptions.hasPagination) {
+    listSql += ` LIMIT ? OFFSET ?`;
+    listValues.push(listOptions.limit, listOptions.offset);
+  }
+
+  const [rows] = await pool.execute(listSql, listValues);
+  const items = rows.map(mapSubmission);
+  let totalItems = items.length;
+
+  if (listOptions.hasPagination) {
+    const [countRows] = await pool.execute(
+      `SELECT COUNT(*) AS total
+       FROM submissions
+       ${filters.whereClause}`,
+      filters.values,
+    );
+
+    totalItems = Number(countRows[0]?.total) || 0;
+  }
+
+  const totalPages = listOptions.hasPagination
+    ? Math.max(Math.ceil(totalItems / listOptions.limit), 1)
+    : 1;
+
+  return {
+    items,
+    pagination: {
+      page: listOptions.page,
+      limit: listOptions.hasPagination ? listOptions.limit : totalItems,
+      totalItems,
+      totalPages,
+      filter: listOptions.filter,
+    },
+  };
+}
+
+async function getSubmissions(userId) {
+  const data = await getSubmissionList(userId);
+
+  return data.items;
 }
 
 function getPlaceholders(values) {
@@ -217,17 +308,13 @@ async function getContests(userId) {
   );
 
   const participatedContestIds = await getParticipatedContestIds(userId);
-  const [
-    contestRows,
-    participantCounts,
-    solvedCounts,
-    problemCounts,
-  ] = await Promise.all([
-    getContestRowsByIds(participatedContestIds, userId),
-    getParticipantCountsByContestIds(participatedContestIds),
-    getSolvedCountsByContestIds(userId, participatedContestIds),
-    getProblemCountsByContestIds(participatedContestIds),
-  ]);
+  const [contestRows, participantCounts, solvedCounts, problemCounts] =
+    await Promise.all([
+      getContestRowsByIds(participatedContestIds, userId),
+      getParticipantCountsByContestIds(participatedContestIds),
+      getSolvedCountsByContestIds(userId, participatedContestIds),
+      getProblemCountsByContestIds(participatedContestIds),
+    ]);
   const participationRows = contestRows.map((row) => {
     const contestCode = row.contest_code;
 
@@ -377,4 +464,8 @@ export async function getProfileForUser(userId) {
     difficulties,
     activities,
   };
+}
+
+export async function getProfileSubmissionsForUser(userId, options = {}) {
+  return getSubmissionList(userId, options);
 }

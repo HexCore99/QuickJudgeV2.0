@@ -25,6 +25,38 @@ function getAuthHeaders() {
   };
 }
 
+function buildQueryString(params = {}) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (key === "withPagination" || value === undefined || value === null) {
+      return;
+    }
+
+    const normalizedValue = String(value).trim();
+
+    if (!normalizedValue || normalizedValue === "All") {
+      return;
+    }
+
+    searchParams.set(key, normalizedValue);
+  });
+
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : "";
+}
+
+function getListPagination(json, items) {
+  return (
+    json.pagination || {
+      page: 1,
+      limit: items.length,
+      totalItems: items.length,
+      totalPages: 1,
+    }
+  );
+}
+
 function splitLines(value) {
   return String(value || "")
     .split("\n")
@@ -63,13 +95,25 @@ export function mapProblemForStudent(problem = {}) {
   };
 }
 
-export async function getProblemBankApi() {
-  const response = await fetch(`${API_URL}/api/problems/bank`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
+export async function getProblemBankApi(params = {}) {
+  const response = await fetch(
+    `${API_URL}/api/problems/bank${buildQueryString(params)}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+  );
   const json = await parseResponse(response);
-  return (json.items || []).map(mapProblemForStudent);
+  const items = (json.items || []).map(mapProblemForStudent);
+
+  if (params.withPagination) {
+    return {
+      items,
+      pagination: getListPagination(json, items),
+    };
+  }
+
+  return items;
 }
 
 export async function getProblemBankProblemApi(problemId) {
@@ -81,13 +125,25 @@ export async function getProblemBankProblemApi(problemId) {
   return mapProblemForStudent(json.item);
 }
 
-export async function getMyProblemsApi() {
-  const response = await fetch(`${API_URL}/api/problems/mine`, {
-    method: "GET",
-    headers: getAuthHeaders(),
-  });
+export async function getMyProblemsApi(params = {}) {
+  const response = await fetch(
+    `${API_URL}/api/problems/mine${buildQueryString(params)}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+  );
   const json = await parseResponse(response);
-  return json.items;
+  const items = json.items || [];
+
+  if (params.withPagination) {
+    return {
+      items,
+      pagination: getListPagination(json, items),
+    };
+  }
+
+  return items;
 }
 
 export async function getMyProblemApi(problemId) {

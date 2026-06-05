@@ -50,6 +50,39 @@ async function parseResponse(response, fallbackMessage) {
   return data;
 }
 
+function buildQueryString(params = {}) {
+  const searchParams = new URLSearchParams();
+
+  Object.entries(params).forEach(([key, value]) => {
+    if (value === undefined || value === null) {
+      return;
+    }
+
+    const normalizedValue = String(value).trim();
+
+    if (!normalizedValue) {
+      return;
+    }
+
+    searchParams.set(key, normalizedValue);
+  });
+
+  const queryString = searchParams.toString();
+  return queryString ? `?${queryString}` : "";
+}
+
+function getListPagination(payload, items) {
+  return (
+    payload.pagination || {
+      page: 1,
+      limit: items.length,
+      totalItems: items.length,
+      totalPages: 1,
+      filter: "all",
+    }
+  );
+}
+
 function normalizeProfilePayload(payload = {}) {
   return {
     profile: { ...emptyProfile, ...(payload.profile || {}) },
@@ -74,6 +107,26 @@ export async function getProfileApi() {
   );
 }
 
+export async function getProfileSubmissionsApi(params = {}) {
+  const response = await fetch(
+    `${API_URL}/api/profile/submissions${buildQueryString(params)}`,
+    {
+      method: "GET",
+      headers: getAuthHeaders(),
+    },
+  );
+  const payload = await parseResponse(
+    response,
+    "Failed to fetch profile submissions.",
+  );
+  const items = payload.items || [];
+
+  return {
+    items,
+    pagination: getListPagination(payload, items),
+  };
+}
+
 export async function updateProfileApi(profileData) {
   const response = await fetch(`${API_URL}/api/profile`, {
     method: "PATCH",
@@ -93,6 +146,9 @@ export async function uploadProfileAvatarApi(imageData) {
     body: JSON.stringify({ imageData }),
   });
 
-  const payload = await parseResponse(response, "Failed to upload profile image.");
+  const payload = await parseResponse(
+    response,
+    "Failed to upload profile image.",
+  );
   return { avatarUrl: payload.avatarUrl || "" };
 }

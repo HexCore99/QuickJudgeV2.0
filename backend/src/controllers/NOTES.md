@@ -19,7 +19,8 @@ Controllers translate HTTP requests into validation, service calls, audit logs, 
 
 ### `profile.controller.js`
 
-- Handles profile reads, profile updates, and avatar uploads.
+- Handles profile reads, paginated profile-submission reads, profile updates, and avatar uploads.
+- `getProfileSubmissions()` reads `page`, `limit`, and `filter` query params before calling the profile read service.
 - Password-change validation happens in `profile.validator.js`.
 
 ### Other controllers
@@ -27,6 +28,7 @@ Controllers translate HTTP requests into validation, service calls, audit logs, 
 - `contest.controller.js` handles student/shared contest actions.
 - `contestAdmin.controller.js` handles admin contest mutations.
 - `problem.controller.js` handles problem CRUD/editorials/publication.
+- `problem.controller.js` also passes `page`, `limit`, `search`, and `difficulty` query params into paginated problem-bank and admin-owned problem-list reads.
 - `submission.controller.js` handles run/submit/history.
 - `discussion.controller.js` handles discussion posts and replies.
 - `auditLog.controller.js`, `adminDashboard.controller.js`, `leaderboard.controller.js`, and `draft.controller.js` are thin wrappers around their matching services.

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 const verdictBg = {
   ac: "bg-green-600/8 text-green-600",
@@ -35,12 +35,36 @@ export default function SubmissionsPanel({
   showLoadMore = true,
   onLoadMore,
   onProblemClick,
+  filterValue,
+  onFilterChange,
+  useExternalFilter = false,
+  isLoading = false,
+  error = null,
+  pagination = null,
+  onPageChange,
 }) {
   const [filter, setFilter] = useState("all");
+  const activeFilter = filterValue ?? filter;
 
-  const filtered =
-    filter === "all" ? submissions : submissions.filter((s) => s.f === filter);
+  const filtered = useExternalFilter
+    ? submissions
+    : activeFilter === "all"
+      ? submissions
+      : submissions.filter((s) => s.f === activeFilter);
   const problemColumnClass = showParticipant ? "col-span-3" : "col-span-5";
+  const totalDisplayCount = pagination?.totalItems ?? totalCount;
+  const totalPages = Math.max(Number(pagination?.totalPages) || 1, 1);
+  const currentPage = Number(pagination?.page) || 1;
+  const canUsePagination = Boolean(pagination && onPageChange);
+
+  function handleFilterChange(nextFilter) {
+    if (onFilterChange) {
+      onFilterChange(nextFilter);
+      return;
+    }
+
+    setFilter(nextFilter);
+  }
 
   function handleProblemClick(submission) {
     if (onProblemClick) {
@@ -72,9 +96,9 @@ export default function SubmissionsPanel({
           {filters.map((f) => (
             <button
               key={f.k}
-              onClick={() => setFilter(f.k)}
+              onClick={() => handleFilterChange(f.k)}
               className={`rounded-lg px-3.5 py-1.5 text-xs font-medium transition-all ${
-                filter === f.k
+                activeFilter === f.k
                   ? "bg-amber-600/7 text-amber-600"
                   : "text-slate-500 hover:bg-slate-200/60 hover:text-slate-700"
               }`}
@@ -114,96 +138,136 @@ export default function SubmissionsPanel({
 
       {/* Rows */}
       <div className="mt-1 space-y-1">
-        {filtered.length === 0 && (
+        {isLoading && (
+          <div className="rounded-xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-400">
+            Loading submissions...
+          </div>
+        )}
+
+        {!isLoading && error && (
+          <div className="rounded-xl bg-red-50 px-4 py-8 text-center text-sm text-red-600">
+            {error}
+          </div>
+        )}
+
+        {!isLoading && !error && filtered.length === 0 && (
           <div className="rounded-xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-400">
             {emptyMessage}
           </div>
         )}
 
-        {filtered.map((s, index) => {
-          const globalIdx = allSubmissions.findIndex(
-            (sub) => sub.id === s.id && sub.at === s.at,
-          );
-          const canOpenSubmission =
-            typeof onOpenSubmission === "function" && globalIdx >= 0;
-          const canOpenProblem =
-            typeof onProblemClick === "function" ||
-            typeof onToast === "function";
+        {!isLoading &&
+          !error &&
+          filtered.map((s, index) => {
+            const globalIdx = allSubmissions.findIndex(
+              (sub) => sub.id === s.id && sub.at === s.at,
+            );
+            const canOpenSubmission =
+              typeof onOpenSubmission === "function" && globalIdx >= 0;
+            const canOpenProblem =
+              typeof onProblemClick === "function" ||
+              typeof onToast === "function";
 
-          return (
-            <div
-              key={`${s.id}-${s.at}`}
-              className={`grid grid-cols-12 items-center gap-2 rounded-xl border px-4 py-3 transition-colors ${
-                index % 2 === 0
-                  ? "border-amber-100 bg-amber-50/55 hover:bg-amber-50"
-                  : "border-sky-100 bg-sky-50/55 hover:bg-sky-50"
-              }`}
-            >
-              <div className={problemColumnClass}>
-                {canOpenProblem ? (
+            return (
+              <div
+                key={`${s.id}-${s.at}`}
+                className={`grid grid-cols-12 items-center gap-2 rounded-xl border px-4 py-3 transition-colors ${
+                  index % 2 === 0
+                    ? "border-amber-100 bg-amber-50/55 hover:bg-amber-50"
+                    : "border-sky-100 bg-sky-50/55 hover:bg-sky-50"
+                }`}
+              >
+                <div className={problemColumnClass}>
+                  {canOpenProblem ? (
+                    <button
+                      className="block truncate text-left text-sm font-medium text-slate-800 transition-colors hover:text-amber-600 hover:underline hover:underline-offset-2"
+                      onClick={() => handleProblemClick(s)}
+                    >
+                      {s.problem}
+                    </button>
+                  ) : (
+                    <div className="truncate text-sm font-medium text-slate-800">
+                      {s.problem}
+                    </div>
+                  )}
+                  {showParticipant && s.participant && (
+                    <div className="mt-1 truncate text-xs font-medium text-slate-500 sm:hidden">
+                      {s.participant}
+                    </div>
+                  )}
+                  <div className="font-mono text-[10px] text-slate-400">
+                    {s.id}
+                  </div>
+                </div>
+                {showParticipant && (
+                  <div className="col-span-2 hidden min-w-0 sm:block">
+                    <div className="truncate text-sm font-semibold text-slate-700">
+                      {s.participant || "Unknown student"}
+                    </div>
+                  </div>
+                )}
+                <div className="col-span-2 text-center">
                   <button
-                    className="block truncate text-left text-sm font-medium text-slate-800 transition-colors hover:text-amber-600 hover:underline hover:underline-offset-2"
-                    onClick={() => handleProblemClick(s)}
+                    disabled={!canOpenSubmission}
+                    className={`rounded-md px-2.5 py-0.5 font-mono text-[11px] font-semibold tracking-wide transition-all ${
+                      canOpenSubmission
+                        ? "cursor-pointer hover:scale-105"
+                        : "cursor-default"
+                    } ${verdictBg[s.verdict.toLowerCase()] || verdictBg.ce}`}
+                    onClick={() =>
+                      canOpenSubmission && onOpenSubmission(globalIdx)
+                    }
                   >
-                    {s.problem}
+                    {s.verdict}
                   </button>
-                ) : (
-                  <div className="truncate text-sm font-medium text-slate-800">
-                    {s.problem}
-                  </div>
-                )}
-                {showParticipant && s.participant && (
-                  <div className="mt-1 truncate text-xs font-medium text-slate-500 sm:hidden">
-                    {s.participant}
-                  </div>
-                )}
-                <div className="font-mono text-[10px] text-slate-400">
-                  {s.id}
+                </div>
+                <div className="col-span-2 hidden text-center font-mono text-xs text-slate-400 sm:block">
+                  {s.time}
+                </div>
+                <div className="col-span-2 hidden text-center font-mono text-xs text-slate-400 sm:block">
+                  {s.mem}
+                </div>
+                <div className="col-span-1 hidden text-right text-[11px] font-medium text-slate-400 sm:block">
+                  {s.lang}
                 </div>
               </div>
-              {showParticipant && (
-                <div className="col-span-2 hidden min-w-0 sm:block">
-                  <div className="truncate text-sm font-semibold text-slate-700">
-                    {s.participant || "Unknown student"}
-                  </div>
-                </div>
-              )}
-              <div className="col-span-2 text-center">
-                <button
-                  disabled={!canOpenSubmission}
-                  className={`rounded-md px-2.5 py-0.5 font-mono text-[11px] font-semibold tracking-wide transition-all ${
-                    canOpenSubmission
-                      ? "cursor-pointer hover:scale-105"
-                      : "cursor-default"
-                  } ${verdictBg[s.verdict.toLowerCase()] || verdictBg.ce}`}
-                  onClick={() =>
-                    canOpenSubmission && onOpenSubmission(globalIdx)
-                  }
-                >
-                  {s.verdict}
-                </button>
-              </div>
-              <div className="col-span-2 hidden text-center font-mono text-xs text-slate-400 sm:block">
-                {s.time}
-              </div>
-              <div className="col-span-2 hidden text-center font-mono text-xs text-slate-400 sm:block">
-                {s.mem}
-              </div>
-              <div className="col-span-1 hidden text-right text-[11px] font-medium text-slate-400 sm:block">
-                {s.lang}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
       </div>
 
       {/* Footer */}
       {showFooter && (
         <div className="mt-5 flex items-center justify-between border-t border-black/7 pt-4">
           <span className="text-xs text-slate-400">
-            Showing {filtered.length} of {totalCount}
+            Showing {filtered.length} of {totalDisplayCount}
           </span>
-          {showLoadMore && (
+          {canUsePagination ? (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={currentPage <= 1 || isLoading}
+                onClick={() => onPageChange(Math.max(currentPage - 1, 1))}
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <ChevronLeft className="h-3 w-3" />
+                Previous
+              </button>
+              <span className="min-w-20 text-center text-xs font-medium text-slate-500">
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={currentPage >= totalPages || isLoading}
+                onClick={() =>
+                  onPageChange(Math.min(currentPage + 1, totalPages))
+                }
+                className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-500 transition-colors hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+                <ChevronRight className="h-3 w-3" />
+              </button>
+            </div>
+          ) : showLoadMore ? (
             <button
               onClick={handleLoadMore}
               className="flex items-center gap-1 text-xs font-medium text-amber-600 transition-colors hover:text-amber-700"
@@ -211,7 +275,7 @@ export default function SubmissionsPanel({
               Load More
               <ChevronDown className="h-3 w-3" />
             </button>
-          )}
+          ) : null}
         </div>
       )}
     </section>
