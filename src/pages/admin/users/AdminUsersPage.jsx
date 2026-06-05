@@ -30,6 +30,7 @@ import {
   suspendAdminUserThunk,
   unsuspendAdminUserThunk,
 } from "../../../features/admin/adminUsersThunks";
+import { validateStrongPassword } from "../../../features/auth/passwordRules";
 
 const ROLE_OPTIONS = [
   { value: "all", label: "All Roles" },
@@ -732,6 +733,12 @@ export default function AdminUsersPage() {
 
     const email = createForm.email.trim().toLowerCase();
     const name = createForm.name.trim();
+    const passwordError = validateStrongPassword(createForm.password);
+
+    if (passwordError) {
+      setFormError(passwordError);
+      return;
+    }
 
     if (createForm.password !== createForm.confirmPassword) {
       setFormError("Passwords do not match.");

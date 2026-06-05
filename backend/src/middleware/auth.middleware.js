@@ -93,6 +93,7 @@ export async function requireAuth(req, res, next) {
       });
     }
 
+    // session expired
     if (decoded.sessionId !== user.active_session_id) {
       return res.status(401).json({
         success: false,

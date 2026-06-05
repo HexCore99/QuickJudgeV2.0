@@ -1,3 +1,5 @@
+import { validateStrongPassword } from "./password.validator.js";
+
 export function validateProfilePayload(payload = {}) {
   const name = payload.name?.trim();
   const hasEmail = Object.prototype.hasOwnProperty.call(payload, "email");
@@ -63,9 +65,9 @@ export function validateProfilePayload(payload = {}) {
   }
 
   if (newPassword || confirmPassword) {
-    if (newPassword.length < 6) {
-      return "New password must be at least 6 characters.";
-    }
+    const passwordError = validateStrongPassword(newPassword, "New password");
+
+    if (passwordError) return passwordError;
 
     if (newPassword !== confirmPassword) {
       return "New password and confirmation do not match.";

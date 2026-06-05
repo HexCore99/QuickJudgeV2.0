@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import { pool } from "../config/db.js";
 import { activateExpiredSuspensionForLogin } from "../services/adminUsers.service.js";
 import { recordAuditLogForRequest } from "../services/auditLog.service.js";
-import { ensureUserSessionSchema } from "../services/userSession.service.js";
 import { login } from "./auth.controller.js";
 
 vi.mock("bcrypt", () => ({
@@ -34,7 +33,7 @@ vi.mock("../services/auditLog.service.js", () => ({
 }));
 
 vi.mock("../services/userSession.service.js", () => ({
-  ensureUserSessionSchema: vi.fn(),
+  ensureUserSessionSchema: vi.fn().mockResolvedValue(undefined),
 }));
 
 function makeReq(body) {
@@ -84,7 +83,6 @@ describe("login", () => {
 
     process.env.JWT_SECRET = "test-secret";
 
-    ensureUserSessionSchema.mockResolvedValue();
     activateExpiredSuspensionForLogin.mockImplementation(async (user) => user);
     recordAuditLogForRequest.mockResolvedValue();
     bcrypt.compare.mockResolvedValue(true);
@@ -133,9 +131,7 @@ describe("login", () => {
   });
 
   it("returns 200 if login is successful", async () => {
-    pool.execute
-      .mockResolvedValueOnce([[makeUser()]])
-      .mockResolvedValueOnce([{ affectedRows: 1 }]);
+    pool.execute.mockResolvedValueOnce([[makeUser()]]);
 
     const res = await callLogin({
       email: "student@example.com",
