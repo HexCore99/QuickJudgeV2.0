@@ -4,7 +4,6 @@ import {
   BarChart3,
   FileText,
   HelpCircle,
-  ScrollText,
   Send,
 } from "lucide-react";
 import { NavLink, useParams } from "react-router-dom";
@@ -14,7 +13,6 @@ const ADMIN_CONTEST_TABS = [
   { label: "Submissions", key: "submissions", icon: Send },
   { label: "Leaderboard", key: "leaderboard", icon: BarChart3 },
   { label: "Announcements", key: "announcements", icon: Bell },
-  { label: "Logs", key: "logs", icon: ScrollText },
   { label: "Queries", key: "queries", icon: HelpCircle },
 ];
 

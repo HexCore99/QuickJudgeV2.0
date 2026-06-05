@@ -4,7 +4,6 @@ import AdminDashboard from "../pages/admin/dashboard/AdminDashboard";
 import AdminContestsPage from "../pages/admin/contests/AdminContestsPage";
 import AdminContestAnnouncementsPage from "../features/admin/components/AdminContestAnnouncementsPage";
 import AdminContestLayoutPage from "../pages/admin/contests/AdminContestLayoutPage";
-import AdminContestLogsPage from "../features/admin/components/AdminContestLogsPage";
 import AdminContestProblemsPage from "../features/admin/components/AdminContestProblemsPage";
 import AdminContestQueriesPage from "../features/admin/components/AdminContestQueriesPage";
 import AdminContestSubmissionsPage from "../features/admin/components/AdminContestSubmissionsPage";
@@ -125,7 +124,7 @@ const router = createBrowserRouter([
           { path: "submissions", element: <AdminContestSubmissionsPage /> },
           { path: "leaderboard", element: <ContestLeaderboardPage /> },
           { path: "announcements", element: <AdminContestAnnouncementsPage /> },
-          { path: "logs", element: <AdminContestLogsPage /> },
+          { path: "logs", element: <Navigate to="../problems" replace /> },
           { path: "queries", element: <AdminContestQueriesPage /> },
         ],
       },

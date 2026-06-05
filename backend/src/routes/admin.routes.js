@@ -8,7 +8,6 @@ import {
   unsuspendUser,
 } from "../controllers/adminUsers.controller.js";
 import { getAuditLogs } from "../controllers/auditLog.controller.js";
-import { getContestSessionLogs } from "../controllers/contestSessionLog.controller.js";
 import {
   requireAdmin,
   requireAuth,
@@ -25,7 +24,6 @@ router.post("/users/admin", requireSuperAdmin, createAdmin);
 router.patch("/users/:userId/suspend", requireSuperAdmin, suspendUser);
 router.patch("/users/:userId/unsuspend", requireSuperAdmin, unsuspendUser);
 router.patch("/users/:userId/ban", requireSuperAdmin, banUser);
-router.get("/contests/:contestId/logs", getContestSessionLogs);
 router.get("/logs", requireSuperAdmin, getAuditLogs);
 
 export default router;

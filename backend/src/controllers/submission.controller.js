@@ -3,7 +3,6 @@ import { runCodeForProblem } from "../services/submissions/judging.service.js";
 import { submitCodeForProblem } from "../services/submissions/persistence.service.js";
 import { createHash } from "node:crypto";
 import { recordAuditLogForRequest } from "../services/auditLog.service.js";
-import { recordContestSessionActivity } from "../services/contest/contestSessionLog.service.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 import {
   validateRunPayload,
@@ -67,11 +66,6 @@ export async function runCode(req, res) {
     }
 
     const result = await runCodeForProblem(req.user.id, req.body);
-    await recordContestSessionActivity(req, {
-      contestId: req.body.contestId,
-      userId: req.user.id,
-      eventType: "activity",
-    });
 
     return successResponse(res, 200, "Code executed.", { result });
   } catch (error) {
@@ -122,11 +116,6 @@ export async function submitCode(req, res) {
     didLockSubmission = true;
 
     const submission = await submitCodeForProblem(req.user.id, req.body);
-    await recordContestSessionActivity(req, {
-      contestId: req.body.contestId,
-      userId: req.user.id,
-      eventType: "activity",
-    });
     await auditSubmitCode(
       req,
       "success",
