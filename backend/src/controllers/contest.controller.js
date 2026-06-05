@@ -21,7 +21,6 @@ import {
   validateContestProblemCode,
 } from "../validators/contest.validator.js";
 import { recordAuditLogForRequest } from "../services/auditLog.service.js";
-import { recordContestSessionActivity } from "../services/contest/contestSessionLog.service.js";
 
 export function getContestTarget(item = {}, fallbackId = null) {
   return {
@@ -102,13 +101,6 @@ export async function getContestDetails(req, res) {
       req.user.role,
     );
 
-    // records that a user opened/entered a contest session.
-    await recordContestSessionActivity(req, {
-      contestId,
-      userId: req.user.id,
-      eventType: "session_start",
-    });
-
     return successResponse(
       res,
       200,
@@ -125,7 +117,7 @@ export async function getContestDetails(req, res) {
   }
 }
 
-// fetches one problem inside a contest and records contest activity.
+// fetches one problem inside a contest.
 
 export async function getContestProblem(req, res) {
   try {
@@ -155,12 +147,6 @@ export async function getContestProblem(req, res) {
       problemCode,
       req.user.role,
     );
-
-    await recordContestSessionActivity(req, {
-      contestId,
-      userId: req.user.id,
-      eventType: "activity",
-    });
 
     return successResponse(res, 200, "Contest problem fetched.", {
       item: data,
@@ -356,11 +342,6 @@ export async function postQuery(req, res) {
     const { contestId } = req.params;
     const { question } = req.body;
     const data = await submitContestQuery(req.user.id, contestId, question);
-    await recordContestSessionActivity(req, {
-      contestId,
-      userId: req.user.id,
-      eventType: "activity",
-    });
     await auditContestAction(
       req,
       "SUBMIT_QUERY",

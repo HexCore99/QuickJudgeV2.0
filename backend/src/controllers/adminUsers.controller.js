@@ -47,6 +47,7 @@ export async function getUsers(req, res) {
   }
 }
 
+// create new admin
 export async function createAdmin(req, res) {
   try {
     const payloadError = validateCreateAdminPayload(req.body);
@@ -94,6 +95,7 @@ export async function createAdmin(req, res) {
   }
 }
 
+// suspend user
 export async function suspendUser(req, res) {
   try {
     const { userId } = req.params;
