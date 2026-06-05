@@ -1,3 +1,5 @@
+import { validateStrongPassword } from "./password.validator.js";
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export function validateUserId(userId) {
@@ -27,9 +29,9 @@ export function validateCreateAdminPayload(payload = {}) {
     return "Enter a valid email address.";
   }
 
-  if (password.length < 6) {
-    return "Password must be at least 6 characters.";
-  }
+  const passwordError = validateStrongPassword(password);
+
+  if (passwordError) return passwordError;
 
   return null;
 }

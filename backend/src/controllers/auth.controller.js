@@ -8,6 +8,7 @@ import { recordAuditLogForRequest } from "../services/auditLog.service.js";
 import { ensureUserSessionSchema } from "../services/userSession.service.js";
 import { insertUserWithUniqueHandle } from "../services/userHandle.service.js";
 import sendPasswordResetEmail from "../utils/mailer.js";
+import { validateStrongPassword } from "../validators/password.validator.js";
 
 const PASSWORD_RESET_SUCCESS_MESSAGE =
   "If that email exists, a reset link has been sent.";
@@ -91,8 +92,9 @@ export async function signup(req, res) {
         message: "Name,email and password are required",
       });
     }
-    // save password length error log
-    if (typeof password !== "string" || password.length < 6) {
+    const passwordError = validateStrongPassword(password);
+
+    if (passwordError) {
       await recordAuditLogForRequest(req, {
         actorEmail: email,
         actorRole: "student",
@@ -101,11 +103,11 @@ export async function signup(req, res) {
         targetEmail: email,
         targetLabel: name,
         status: "failed",
-        message: "Password must be at least 6 characters",
+        message: passwordError,
       });
       return res.status(400).json({
         success: false,
-        message: "Password must be at least 6 characters",
+        message: passwordError,
       });
     }
 
@@ -454,10 +456,12 @@ export async function resetPassword(req, res) {
       });
     }
 
-    if (typeof password !== "string" || password.length < 6) {
+    const passwordError = validateStrongPassword(password);
+
+    if (passwordError) {
       return res.status(400).json({
         success: false,
-        message: "Password must be at least 6 characters",
+        message: passwordError,
       });
     }
 

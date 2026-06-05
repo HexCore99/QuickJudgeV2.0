@@ -6,6 +6,7 @@ import AuthHeader from "../../features/auth/components/AuthHeader";
 import AuthInput from "../../features/auth/components/AuthInput";
 import AuthShell from "../../features/auth/components/AuthShell";
 import { resetPasswordApi } from "../../features/auth/authApi";
+import { validateStrongPassword } from "../../features/auth/passwordRules";
 
 function ResetPasswordPage() {
   const { token } = useParams();
@@ -34,9 +35,9 @@ function ResetPasswordPage() {
       return "Please fill in both password fields.";
     }
 
-    if (formData.password.length < 6) {
-      return "Password must be at least 6 characters.";
-    }
+    const passwordError = validateStrongPassword(formData.password);
+
+    if (passwordError) return passwordError;
 
     if (formData.password !== formData.confirmPassword) {
       return "Passwords do not match.";

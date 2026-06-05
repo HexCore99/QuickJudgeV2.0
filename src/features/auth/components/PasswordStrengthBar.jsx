@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { getPasswordRuleSummary, MIN_PASSWORD_LENGTH } from "../passwordRules";
 
 function PasswordStrengthBar({ password, showLabel = true }) {
   const strength = useMemo(() => computeStrength(password), [password]);
@@ -29,7 +30,7 @@ function PasswordStrengthBar({ password, showLabel = true }) {
       </div>
 
       <p className="text-xs text-slate-500">
-        Use 10+ chars, mix upper/lower, number, symbol.
+        Use {getPasswordRuleSummary()}
       </p>
     </div>
   );
@@ -47,7 +48,7 @@ function computeStrength(password) {
   }
 
   let score = 0;
-  if (pwd.length >= 6) score += 1;
+  if (pwd.length >= MIN_PASSWORD_LENGTH) score += 1;
   if (pwd.length >= 10) score += 1;
   if (/[a-z]/.test(pwd)) score += 1;
   if (/[A-Z]/.test(pwd)) score += 1;

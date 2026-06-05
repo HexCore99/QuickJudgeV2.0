@@ -11,6 +11,7 @@ import PasswordStrengthBar from "../../features/auth/components/PasswordStrength
 
 import { signupUser } from "../../features/auth/authThunks";
 import { clearAuthError } from "../../features/auth/authSlice";
+import { validateStrongPassword } from "../../features/auth/passwordRules";
 import {
   selectAuthError,
   selectAuthLoading,
@@ -67,9 +68,11 @@ function SignupPage() {
     if (!name || !email || !password || !confirmPassword) {
       return "Please fill in all required fields.";
     }
-    if (password.length < 6) {
-      return "Password must be at least 6 characters.";
-    }
+
+    const passwordError = validateStrongPassword(password);
+
+    if (passwordError) return passwordError;
+
     if (password !== confirmPassword) {
       return "Passwords do not match.";
     }

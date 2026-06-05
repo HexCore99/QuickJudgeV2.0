@@ -10,6 +10,7 @@ import {
   Upload,
   User,
 } from "lucide-react";
+import { validateStrongPassword } from "../../auth/passwordRules";
 import { useProfileAvatarUrl } from "../profileAvatar";
 
 const MAX_AVATAR_SIZE_BYTES = 2 * 1024 * 1024;
@@ -106,9 +107,16 @@ export default function SettingsPanel({ user, isSaving, onSave, onToast }) {
       return;
     }
 
-    if (isPasswordChanging && form.newPassword.length < 6) {
-      onToast?.("New password must be at least 6 characters", "error");
-      return;
+    if (isPasswordChanging) {
+      const passwordError = validateStrongPassword(
+        form.newPassword,
+        "New password",
+      );
+
+      if (passwordError) {
+        onToast?.(passwordError, "error");
+        return;
+      }
     }
 
     if (isPasswordChanging && form.newPassword !== form.confirmPassword) {
