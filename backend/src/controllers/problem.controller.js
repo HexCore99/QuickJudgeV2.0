@@ -37,10 +37,22 @@ async function auditProblemAction(req, action, status, target, message) {
   });
 }
 
+function getProblemListOptions(req) {
+  return {
+    page: req.query.page,
+    limit: req.query.limit,
+    search: req.query.search,
+    difficulty: req.query.difficulty,
+  };
+}
+
 export async function getMyProblems(req, res) {
   try {
-    const data = await getProblemsForAuthor(req.user.id);
-    return successResponse(res, 200, "Problems fetched.", { items: data });
+    const data = await getProblemsForAuthor(
+      req.user.id,
+      getProblemListOptions(req),
+    );
+    return successResponse(res, 200, "Problems fetched.", data);
   } catch (error) {
     console.error("Get problems error:", error);
     return errorResponse(
@@ -53,8 +65,8 @@ export async function getMyProblems(req, res) {
 
 export async function getProblemBank(req, res) {
   try {
-    const data = await getProblemBankItems();
-    return successResponse(res, 200, "Problem bank fetched.", { items: data });
+    const data = await getProblemBankItems(getProblemListOptions(req));
+    return successResponse(res, 200, "Problem bank fetched.", data);
   } catch (error) {
     console.error("Get problem bank error:", error);
     return errorResponse(

@@ -1,8 +1,19 @@
 import { saveProfileAvatarForUser } from "../services/profile/avatar.service.js";
-import { getProfileForUser } from "../services/profile/read.service.js";
+import {
+  getProfileForUser,
+  getProfileSubmissionsForUser,
+} from "../services/profile/read.service.js";
 import { updateProfileForUser } from "../services/profile/update.service.js";
 import { errorResponse, successResponse } from "../utils/response.js";
 import { validateProfilePayload } from "../validators/profile.validator.js";
+
+function getSubmissionListOptions(req) {
+  return {
+    page: req.query.page,
+    limit: req.query.limit,
+    filter: req.query.filter,
+  };
+}
 
 export async function getProfile(req, res) {
   try {
@@ -14,6 +25,23 @@ export async function getProfile(req, res) {
       res,
       error.statusCode || 500,
       error.message || "Failed to fetch profile.",
+    );
+  }
+}
+
+export async function getProfileSubmissions(req, res) {
+  try {
+    const data = await getProfileSubmissionsForUser(
+      req.user.id,
+      getSubmissionListOptions(req),
+    );
+    return successResponse(res, 200, "Profile submissions fetched.", data);
+  } catch (error) {
+    console.error("Get profile submissions error:", error);
+    return errorResponse(
+      res,
+      error.statusCode || 500,
+      error.message || "Failed to fetch profile submissions.",
     );
   }
 }

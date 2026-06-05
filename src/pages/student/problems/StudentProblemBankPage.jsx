@@ -1,14 +1,31 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { Search, Filter, CheckCircle2, AlertCircle } from "lucide-react";
+import {
+  Search,
+  Filter,
+  CheckCircle2,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import StudentTopTabs from "../../../components/layout/StudentTopTabs";
 import { getProblemBankApi } from "../../../features/problems/problemsApi";
 import { DIFFICULTY_BADGE_CLASSES } from "../../../features/problems/problemStyles";
+
+const PAGE_SIZE = 10;
+const DEFAULT_PAGINATION = {
+  page: 1,
+  limit: PAGE_SIZE,
+  totalItems: 0,
+  totalPages: 1,
+};
 
 function StudentProblemBankPage() {
   const [problems, setProblems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDifficulty, setFilterDifficulty] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(DEFAULT_PAGINATION);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -20,10 +37,17 @@ function StudentProblemBankPage() {
       setError(null);
 
       try {
-        const items = await getProblemBankApi();
+        const result = await getProblemBankApi({
+          page: currentPage,
+          limit: PAGE_SIZE,
+          search: searchQuery,
+          difficulty: filterDifficulty,
+          withPagination: true,
+        });
 
         if (isMounted) {
-          setProblems(items);
+          setProblems(result.items);
+          setPagination(result.pagination || DEFAULT_PAGINATION);
         }
       } catch (err) {
         if (isMounted) {
@@ -41,19 +65,20 @@ function StudentProblemBankPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [currentPage, searchQuery, filterDifficulty]);
 
-  const filteredProblems = problems.filter((problem) => {
-    const normalizedQuery = searchQuery.toLowerCase();
-    const tags = problem.tags || [];
-    const matchesSearch =
-      problem.title.toLowerCase().includes(normalizedQuery) ||
-      tags.some((tag) => tag.toLowerCase().includes(normalizedQuery));
-    const matchesDifficulty =
-      filterDifficulty === "All" || problem.difficulty === filterDifficulty;
+  const totalPages = Math.max(Number(pagination.totalPages) || 1, 1);
+  const displayedPage = Number(pagination.page) || currentPage;
 
-    return matchesSearch && matchesDifficulty;
-  });
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleDifficultyChange = (difficulty) => {
+    setFilterDifficulty(difficulty);
+    setCurrentPage(1);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
@@ -80,7 +105,7 @@ function StudentProblemBankPage() {
                   type="text"
                   placeholder="Search by title or tags..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                   className="w-full rounded-xl border border-slate-200 py-2 pr-4 pl-10 text-[13px] transition outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
                 />
               </div>
@@ -96,7 +121,7 @@ function StudentProblemBankPage() {
                   {["All", "Easy", "Medium", "Hard"].map((difficulty) => (
                     <button
                       key={difficulty}
-                      onClick={() => setFilterDifficulty(difficulty)}
+                      onClick={() => handleDifficultyChange(difficulty)}
                       className={`rounded-md px-3 py-1.5 text-[12px] font-semibold transition ${
                         filterDifficulty === difficulty
                           ? "bg-white text-amber-700 shadow-sm"
@@ -154,7 +179,7 @@ function StudentProblemBankPage() {
 
                   {!isLoading &&
                     !error &&
-                    filteredProblems.map((problem) => (
+                    problems.map((problem) => (
                       <tr
                         key={problem.id}
                         className="border-b border-slate-50 transition last:border-0 hover:bg-slate-50/60"
@@ -201,7 +226,7 @@ function StudentProblemBankPage() {
                       </tr>
                     ))}
 
-                  {!isLoading && !error && filteredProblems.length === 0 && (
+                  {!isLoading && !error && problems.length === 0 && (
                     <tr>
                       <td
                         colSpan={4}
@@ -214,6 +239,41 @@ function StudentProblemBankPage() {
                 </tbody>
               </table>
             </div>
+
+            {!isLoading && !error && pagination.totalItems > 0 && (
+              <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-[12px] font-medium text-slate-500">
+                  Showing {problems.length} of {pagination.totalItems} problems
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={displayedPage <= 1}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(page - 1, 1))
+                    }
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    Previous
+                  </button>
+                  <span className="min-w-24 text-center text-[12px] font-semibold text-slate-600">
+                    Page {displayedPage} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={displayedPage >= totalPages}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.min(page + 1, totalPages))
+                    }
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>

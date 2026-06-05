@@ -10,6 +10,8 @@ import {
   AlertCircle,
   Eye,
   EyeOff,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import StudentTopTabs from "../../../components/layout/StudentTopTabs";
 import AdminMoreMenu from "../../../components/common/AdminMoreMenu";
@@ -21,10 +23,20 @@ import {
   updateProblemPublicationApi,
 } from "../../../features/problems/problemsApi";
 
+const PAGE_SIZE = 10;
+const DEFAULT_PAGINATION = {
+  page: 1,
+  limit: PAGE_SIZE,
+  totalItems: 0,
+  totalPages: 1,
+};
+
 export default function ProblemBankPage() {
   const [problems, setProblems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterDifficulty, setFilterDifficulty] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pagination, setPagination] = useState(DEFAULT_PAGINATION);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
@@ -38,10 +50,17 @@ export default function ProblemBankPage() {
       setError(null);
 
       try {
-        const items = await getMyProblemsApi();
+        const result = await getMyProblemsApi({
+          page: currentPage,
+          limit: PAGE_SIZE,
+          search: searchQuery,
+          difficulty: filterDifficulty,
+          withPagination: true,
+        });
 
         if (!isCancelled) {
-          setProblems(items);
+          setProblems(result.items);
+          setPagination(result.pagination || DEFAULT_PAGINATION);
         }
       } catch (err) {
         if (!isCancelled) {
@@ -59,7 +78,20 @@ export default function ProblemBankPage() {
     return () => {
       isCancelled = true;
     };
-  }, []);
+  }, [currentPage, searchQuery, filterDifficulty]);
+
+  const totalPages = Math.max(Number(pagination.totalPages) || 1, 1);
+  const displayedPage = Number(pagination.page) || currentPage;
+
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleDifficultyChange = (difficulty) => {
+    setFilterDifficulty(difficulty);
+    setCurrentPage(1);
+  };
 
   const handleDeleteProblem = async (problem) => {
     const confirmed = window.confirm(
@@ -78,6 +110,19 @@ export default function ProblemBankPage() {
       setProblems((current) =>
         current.filter((item) => Number(item.id) !== Number(problem.id)),
       );
+      setPagination((current) => {
+        const totalItems = Math.max(Number(current.totalItems) - 1, 0);
+
+        return {
+          ...current,
+          totalItems,
+          totalPages: Math.max(Math.ceil(totalItems / PAGE_SIZE), 1),
+        };
+      });
+
+      if (problems.length === 1 && currentPage > 1) {
+        setCurrentPage((page) => page - 1);
+      }
     } catch (err) {
       setError(err.message || "Failed to delete problem.");
     } finally {
@@ -105,17 +150,6 @@ export default function ProblemBankPage() {
       setPublishingId(null);
     }
   };
-
-  const filteredProblems = problems.filter((p) => {
-    const matchesSearch =
-      p.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.tags || []).some((t) =>
-        t.toLowerCase().includes(searchQuery.toLowerCase()),
-      );
-    const matchesDiff =
-      filterDifficulty === "All" || p.difficulty === filterDifficulty;
-    return matchesSearch && matchesDiff;
-  });
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
@@ -164,7 +198,7 @@ export default function ProblemBankPage() {
                   type="text"
                   placeholder="Search by title or tags..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={handleSearchChange}
                   className="w-full rounded-xl border border-slate-200 py-2 pr-4 pl-10 text-[13px] transition outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/20"
                 />
               </div>
@@ -180,7 +214,7 @@ export default function ProblemBankPage() {
                   {["All", "Easy", "Medium", "Hard"].map((diff) => (
                     <button
                       key={diff}
-                      onClick={() => setFilterDifficulty(diff)}
+                      onClick={() => handleDifficultyChange(diff)}
                       className={`rounded-md px-3 py-1.5 text-[12px] font-semibold transition ${
                         filterDifficulty === diff
                           ? "bg-white text-amber-700 shadow-sm"
@@ -232,7 +266,7 @@ export default function ProblemBankPage() {
                   )}
 
                   {!isLoading &&
-                    filteredProblems.map((p) => {
+                    problems.map((p) => {
                       return (
                         <tr
                           key={p.id}
@@ -333,7 +367,7 @@ export default function ProblemBankPage() {
                       );
                     })}
 
-                  {!isLoading && filteredProblems.length === 0 && (
+                  {!isLoading && problems.length === 0 && (
                     <tr>
                       <td
                         colSpan={6}
@@ -346,6 +380,41 @@ export default function ProblemBankPage() {
                 </tbody>
               </table>
             </div>
+
+            {!isLoading && !error && pagination.totalItems > 0 && (
+              <div className="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-[12px] font-medium text-slate-500">
+                  Showing {problems.length} of {pagination.totalItems} problems
+                </p>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={displayedPage <= 1}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.max(page - 1, 1))
+                    }
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <ChevronLeft className="h-3.5 w-3.5" />
+                    Previous
+                  </button>
+                  <span className="min-w-24 text-center text-[12px] font-semibold text-slate-600">
+                    Page {displayedPage} of {totalPages}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={displayedPage >= totalPages}
+                    onClick={() =>
+                      setCurrentPage((page) => Math.min(page + 1, totalPages))
+                    }
+                    className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:border-amber-300 hover:bg-amber-50 hover:text-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next
+                    <ChevronRight className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </main>
       </div>

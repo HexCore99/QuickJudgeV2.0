@@ -1,11 +1,83 @@
 import { pool } from "../config/db.js";
 
 let problemTablesReadyPromise = null;
+const PROBLEM_LIST_DEFAULT_LIMIT = 10;
+const PROBLEM_LIST_MAX_LIMIT = 100;
+const PROBLEM_LIST_DIFFICULTIES = new Set(["Easy", "Medium", "Hard"]);
 
 function createServiceError(message, statusCode = 400) {
   const error = new Error(message);
   error.statusCode = statusCode;
   return error;
+}
+
+function toPositiveInteger(value, fallback) {
+  const numberValue = Number(value);
+
+  if (!Number.isInteger(numberValue) || numberValue <= 0) {
+    return fallback;
+  }
+
+  return numberValue;
+}
+
+function normalizeProblemListOptions(options = {}) {
+  const hasPagination =
+    options.page !== undefined || options.limit !== undefined;
+  const page = toPositiveInteger(options.page, 1);
+  const limit = Math.min(
+    toPositiveInteger(options.limit, PROBLEM_LIST_DEFAULT_LIMIT),
+    PROBLEM_LIST_MAX_LIMIT,
+  );
+  const search = String(options.search || "").trim();
+  const difficulty = PROBLEM_LIST_DIFFICULTIES.has(options.difficulty)
+    ? options.difficulty
+    : null;
+
+  return {
+    hasPagination,
+    page,
+    limit,
+    offset: (page - 1) * limit,
+    search,
+    difficulty,
+  };
+}
+
+function buildProblemListFilters({ authorId, publicOnly, options }) {
+  const conditions = [];
+  const values = [];
+
+  if (authorId !== undefined && authorId !== null) {
+    conditions.push("p.author_id = ?");
+    values.push(authorId);
+  }
+
+  if (publicOnly) {
+    conditions.push("p.is_published = 1");
+  }
+
+  if (options.difficulty) {
+    conditions.push("p.difficulty = ?");
+    values.push(options.difficulty);
+  }
+
+  if (options.search) {
+    const searchPattern = `%${options.search}%`;
+    conditions.push(
+      `(p.title LIKE ? OR EXISTS (
+        SELECT 1
+        FROM problem_tags pt
+        WHERE pt.problem_id = p.id AND pt.tag_name LIKE ?
+      ))`,
+    );
+    values.push(searchPattern, searchPattern);
+  }
+
+  return {
+    whereClause: conditions.length ? `WHERE ${conditions.join(" AND ")}` : "",
+    values,
+  };
 }
 
 // create table if missing
@@ -245,40 +317,70 @@ async function ensureAuthorOwnsProblem(connection, authorId, problemId) {
   }
 }
 
-export async function getProblemsForAuthor(authorId) {
+async function getProblemList({ authorId, publicOnly = false, options = {} }) {
   await ensureProblemTables();
 
-  const [rows] = await pool.execute(
-    `SELECT id, author_id, title, statement, input_format, output_format,
-            constraints_text, difficulty, points, time_limit_seconds,
-            memory_limit_mb, has_editorial, is_published, created_at, updated_at
-     FROM problems
-     WHERE author_id = ?
-     ORDER BY updated_at DESC, id DESC`,
-    [authorId],
-  );
+  const listOptions = normalizeProblemListOptions(options);
+  const filters = buildProblemListFilters({
+    authorId,
+    publicOnly,
+    options: listOptions,
+  });
+  const listValues = [...filters.values];
+  let listSql = `SELECT p.id, p.author_id, p.title, p.statement, p.input_format,
+            p.output_format, p.constraints_text, p.difficulty, p.points,
+            p.time_limit_seconds, p.memory_limit_mb, p.has_editorial,
+            p.is_published, p.created_at, p.updated_at
+     FROM problems p
+     ${filters.whereClause}
+     ORDER BY p.updated_at DESC, p.id DESC`;
+
+  if (listOptions.hasPagination) {
+    listSql += ` LIMIT ? OFFSET ?`;
+    listValues.push(listOptions.limit, listOptions.offset);
+  }
+
+  const [rows] = await pool.execute(listSql, listValues);
 
   const tagsByProblemId = await getTagsByProblemIds(rows.map((row) => row.id));
+  const items = rows.map((row) =>
+    mapProblemRow(row, tagsByProblemId[row.id] || []),
+  );
+  let totalItems = items.length;
 
-  return rows.map((row) => mapProblemRow(row, tagsByProblemId[row.id] || []));
+  if (listOptions.hasPagination) {
+    const [countRows] = await pool.execute(
+      `SELECT COUNT(*) AS total
+       FROM problems p
+       ${filters.whereClause}`,
+      filters.values,
+    );
+
+    totalItems = Number(countRows[0]?.total) || 0;
+  }
+
+  const totalPages = listOptions.hasPagination
+    ? Math.max(Math.ceil(totalItems / listOptions.limit), 1)
+    : 1;
+
+  return {
+    items,
+    pagination: {
+      page: listOptions.page,
+      limit: listOptions.hasPagination ? listOptions.limit : totalItems,
+      totalItems,
+      totalPages,
+    },
+  };
+}
+
+export async function getProblemsForAuthor(authorId, options = {}) {
+  return getProblemList({ authorId, options });
 }
 
 // fetch the problems which are public
-export async function getProblemBankItems() {
-  await ensureProblemTables();
-
-  const [rows] = await pool.execute(
-    `SELECT id, author_id, title, statement, input_format, output_format,
-            constraints_text, difficulty, points, time_limit_seconds,
-            memory_limit_mb, has_editorial, is_published, created_at, updated_at
-     FROM problems
-     WHERE is_published = 1
-     ORDER BY updated_at DESC, id DESC`,
-  );
-
-  const tagsByProblemId = await getTagsByProblemIds(rows.map((row) => row.id));
-
-  return rows.map((row) => mapProblemRow(row, tagsByProblemId[row.id] || []));
+export async function getProblemBankItems(options = {}) {
+  return getProblemList({ publicOnly: true, options });
 }
 
 // fetch specific problem details for author
