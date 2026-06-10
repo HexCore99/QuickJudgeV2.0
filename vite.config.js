@@ -5,6 +5,9 @@ import { Server } from "lucide-react";
 
 // https://vite.dev/config/
 export default defineConfig({
+  resolve: {
+    dedupe: ["react", "react-dom"],
+  },
   plugins: [
     tailwindcss(),
 

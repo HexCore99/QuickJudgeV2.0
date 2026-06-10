@@ -143,7 +143,6 @@ function CodeEditorPanel({
 }) {
   const [language, setLanguage] = useState("cpp");
   const [theme, setTheme] = useState("vs-dark");
-  const [activeIoTab, setActiveIoTab] = useState("input");
   const [code, setCode] = useState(CODE_TEMPLATES.cpp);
   const [customInput, setCustomInput] = useState("");
   const [output, setOutput] = useState("");
@@ -402,7 +401,6 @@ function CodeEditorPanel({
     setOutput("");
     setVerdict(null);
     setExecutionDetails(null);
-    setActiveIoTab("input");
     markDraftChanged({
       sourceCode: template,
       selectedLanguage: language,
@@ -432,7 +430,6 @@ function CodeEditorPanel({
     setVerdict(null);
     setOutput("");
     setExecutionDetails(null);
-    setActiveIoTab("output");
 
     try {
       await saveDraftNow();
@@ -473,7 +470,6 @@ function CodeEditorPanel({
         setOutput(
           "This exact code is already being submitted. Please wait for the current submission to finish.",
         );
-        setActiveIoTab("output");
         return;
       }
 
@@ -483,7 +479,6 @@ function CodeEditorPanel({
         setOutput(
           "No changes detected since your last submission. Edit your code before submitting again.",
         );
-        setActiveIoTab("output");
         return;
       }
 
@@ -492,7 +487,6 @@ function CodeEditorPanel({
       setVerdict(null);
       setOutput("");
       setExecutionDetails(null);
-      setActiveIoTab("output");
 
       try {
         await saveDraftNow({
@@ -657,8 +651,6 @@ function CodeEditorPanel({
       </div>
 
       <IOPanel
-        activeTab={activeIoTab}
-        onActiveTabChange={setActiveIoTab}
         customInput={customInput}
         onCustomInputChange={handleCustomInputChange}
         output={output}

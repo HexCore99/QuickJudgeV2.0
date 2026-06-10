@@ -71,14 +71,39 @@ function formatTimeLimit(seconds) {
   return `${value} ${value === 1 ? "second" : "seconds"}`;
 }
 
+function mapEditorialForStudent(editorial) {
+  if (!editorial) {
+    return null;
+  }
+
+  const mappedEditorial = {
+    id: editorial.id || null,
+    problemId: editorial.problemId || editorial.problem_id || null,
+    markdownContent:
+      editorial.markdownContent || editorial.markdown_content || "",
+    codeContent: editorial.codeContent || editorial.code_content || "",
+    videoLink: editorial.videoLink || editorial.video_link || "",
+    updatedAt: editorial.updatedAt || editorial.updated_at || null,
+  };
+
+  return mappedEditorial.markdownContent ||
+    mappedEditorial.codeContent ||
+    mappedEditorial.videoLink
+    ? mappedEditorial
+    : null;
+}
+
 export function mapProblemForStudent(problem = {}) {
+  const editorial = mapEditorialForStudent(problem.editorial);
+
   return {
     ...problem,
     id: problem.id,
     title: problem.title || "Untitled Problem",
     difficulty: problem.difficulty || "Medium",
     tags: problem.tags || [],
-    hasEditorial: Boolean(problem.hasEditorial),
+    hasEditorial: Boolean(problem.hasEditorial || editorial),
+    editorial,
     description: problem.statement || problem.description || "",
     inputSpec: problem.inputFormat || problem.inputSpec || "",
     outputSpec: problem.outputFormat || problem.outputSpec || "",

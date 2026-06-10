@@ -47,7 +47,7 @@ export default function DiscussionPage() {
         logoTo="/"
       />
 
-      <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col px-6 py-8">
+      <main className="flex w-full flex-1 flex-col px-4 py-6 sm:px-6 lg:px-8 2xl:px-10">
         {/* Hero */}
         <section className="mb-6">
           <div className="flex items-start gap-3">
@@ -72,9 +72,9 @@ export default function DiscussionPage() {
           </div>
         )}
 
-        <div className="flex flex-1 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+        <div className="flex min-h-[620px] flex-1 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-sm">
           {/* Left — Discussion List */}
-          <div className="w-[340px] shrink-0 border-r border-slate-200/80 bg-slate-50/60">
+          <div className="w-[360px] shrink-0 border-r border-slate-200/80 bg-slate-50/60 xl:w-[400px] 2xl:w-[430px]">
             <DiscussionList isLoading={isLoading} />
           </div>
 
@@ -86,8 +86,8 @@ export default function DiscussionPage() {
       </main>
 
       {/* Footer */}
-      <footer className="mt-12 border-t border-black/7 py-6">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 px-6 text-xs text-slate-500 md:flex-row">
+      <footer className="border-t border-black/7 py-5">
+        <div className="flex w-full flex-col items-center justify-between gap-3 px-4 text-xs text-slate-500 sm:px-6 md:flex-row lg:px-8 2xl:px-10">
           <span>QuickJudge V2.0 — Built for competitive learners</span>
           <div className="flex gap-4">
             <a href="#" className="transition-colors hover:text-slate-800">

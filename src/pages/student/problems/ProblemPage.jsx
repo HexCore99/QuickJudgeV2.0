@@ -44,9 +44,7 @@ function normalizeProblemDetail({ problemId, baseProblem = {}, contestTitle }) {
       : "1 second");
   const memoryLimit =
     baseProblem.memoryLimit ||
-    (baseProblem.memoryLimitMb
-      ? `${baseProblem.memoryLimitMb} MB`
-      : "256 MB");
+    (baseProblem.memoryLimitMb ? `${baseProblem.memoryLimitMb} MB` : "256 MB");
 
   return {
     ...baseProblem,
@@ -63,6 +61,7 @@ function normalizeProblemDetail({ problemId, baseProblem = {}, contestTitle }) {
     samples: normalizeSamples(baseProblem.samples || baseProblem.testCases),
     tags: Array.isArray(baseProblem.tags) ? baseProblem.tags : [],
     hasEditorial: Boolean(baseProblem.hasEditorial),
+    editorial: baseProblem.editorial || null,
     timeLimit,
     memoryLimit,
     contestTitle: contestTitle || baseProblem.contestTitle || null,

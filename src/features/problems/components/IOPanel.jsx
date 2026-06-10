@@ -14,11 +14,6 @@ import {
   XCircle,
 } from "lucide-react";
 
-const IO_TABS = [
-  { key: "input", label: "Custom Input" },
-  { key: "output", label: "Output" },
-];
-
 const MIN_HEIGHT = 40;
 const DEFAULT_HEIGHT = 180;
 
@@ -86,8 +81,6 @@ const EXT_TO_LANG = {
 };
 
 function IOPanel({
-  activeTab,
-  onActiveTabChange,
   customInput,
   onCustomInputChange,
   output,
@@ -244,33 +237,11 @@ function IOPanel({
         <div className="h-0.5 w-10 rounded-full bg-slate-200 transition-all group-hover:w-16 group-hover:bg-amber-500" />
       </div>
 
-      <div className="flex shrink-0 items-center justify-between border-b border-slate-100 bg-slate-50 px-3 py-1.5">
-        <div className="flex items-center gap-1">
-          {IO_TABS.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => {
-                onActiveTabChange(tab.key);
-
-                if (collapsed) {
-                  setCollapsed(false);
-                  setPanelHeight(DEFAULT_HEIGHT);
-                }
-              }}
-              className={`rounded-lg px-3 py-1.5 text-[12px] font-medium transition ${
-                activeTab === tab.key && !collapsed
-                  ? "bg-white text-slate-800 shadow-sm"
-                  : "text-slate-400 hover:text-slate-600"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
-
+      <div className="grid shrink-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center border-b border-slate-100 bg-slate-50 px-3 py-1.5">
+        <div className="flex min-w-0 items-center gap-2">
           {verdictConfig && (
             <span
-              className={`ml-2 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold ${verdictConfig.badge}`}
+              className={`inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold ${verdictConfig.badge}`}
             >
               <verdictConfig.icon size={12} />
               {verdictConfig.label}
@@ -278,7 +249,7 @@ function IOPanel({
           )}
 
           {executionDetails && verdict && (
-            <span className="ml-2 text-[11px] text-slate-400">
+            <span className="truncate text-[11px] text-slate-400">
               {executionDetails.time && `${executionDetails.time}`}
               {executionDetails.time && executionDetails.memory && " · "}
               {executionDetails.memory && `${executionDetails.memory}`}
@@ -286,18 +257,7 @@ function IOPanel({
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleToggleCollapse}
-            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200/60 hover:text-slate-600"
-            title={collapsed ? "Expand panel" : "Collapse panel"}
-          >
-            {collapsed ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
-
-          <div className="h-5 w-px bg-slate-200" />
-
+        <div className="flex items-center justify-center gap-2">
           <button
             type="button"
             onClick={onRun}
@@ -337,20 +297,39 @@ function IOPanel({
             Submit File
           </button>
         </div>
+
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleToggleCollapse}
+            className="rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200/60 hover:text-slate-600"
+            title={collapsed ? "Expand panel" : "Collapse panel"}
+          >
+            {collapsed ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </button>
+        </div>
       </div>
 
       {!collapsed && contentHeight > 0 && (
-        <div className="min-h-0 flex-1 overflow-hidden">
-          {activeTab === "input" ? (
+        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden md:grid-cols-2">
+          <div className="flex min-h-0 flex-col border-b border-slate-100 md:border-r md:border-b-0">
+            <div className="shrink-0 border-b border-slate-100 bg-white px-4 py-2 text-[11px] font-bold tracking-wide text-slate-400 uppercase">
+              Custom Input
+            </div>
             <textarea
               value={customInput}
               onChange={(event) => onCustomInputChange(event.target.value)}
               placeholder="Enter your custom input here..."
               spellCheck={false}
-              className="h-full w-full resize-none border-0 bg-white px-4 py-3 font-mono text-[13px] leading-6 text-slate-700 outline-none placeholder:text-slate-300"
+              className="min-h-0 flex-1 resize-none border-0 bg-white px-4 py-3 font-mono text-[13px] leading-6 text-slate-700 outline-none placeholder:text-slate-300"
             />
-          ) : (
-            <div className="h-full overflow-auto">
+          </div>
+
+          <div className="flex min-h-0 flex-col bg-slate-50">
+            <div className="shrink-0 border-b border-slate-100 bg-white px-4 py-2 text-[11px] font-bold tracking-wide text-slate-400 uppercase">
+              Output
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto">
               {verdictConfig && (
                 <div
                   className={`flex items-center gap-2 border-b px-4 py-2.5 ${verdictConfig.headerBg}`}
@@ -381,11 +360,11 @@ function IOPanel({
                 </div>
               )}
 
-              <pre className="px-4 py-3 font-mono text-[13px] leading-6 text-slate-700">
+              <pre className="px-4 py-3 font-mono text-[13px] leading-6 whitespace-pre-wrap text-slate-700">
                 {output || "Run your code to see output here."}
               </pre>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>

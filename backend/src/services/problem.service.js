@@ -444,10 +444,19 @@ export async function getProblemBankItemById(problemId) {
      ORDER BY sort_order ASC, id ASC`,
     [problemIdNumber],
   );
+  const [editorialRows] = await pool.execute(
+    `SELECT id, problem_id, markdown_content, code_content, video_link,
+            created_at, updated_at
+     FROM problem_editorials
+     WHERE problem_id = ?
+     LIMIT 1`,
+    [problemIdNumber],
+  );
 
   return {
     ...mapProblemRow(rows[0], tagsByProblemId[problemIdNumber] || []),
     testCases: testCaseRows.map(mapTestCaseRow),
+    editorial: editorialRows.length ? mapEditorialRow(editorialRows[0]) : null,
   };
 }
 

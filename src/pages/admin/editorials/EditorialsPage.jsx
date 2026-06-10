@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import DOMPurify from "dompurify";
+import { marked } from "marked";
 import {
   Search,
   Edit3,
@@ -16,6 +18,9 @@ import {
   getProblemEditorialApi,
   saveProblemEditorialApi,
 } from "../../../features/problems/problemsApi";
+
+const markdownPreviewClasses =
+  "space-y-3 text-[13px] leading-6 text-slate-700 [&_a]:font-medium [&_a]:text-amber-700 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-amber-300 [&_blockquote]:bg-white [&_blockquote]:py-2 [&_blockquote]:pr-3 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-slate-200 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[12px] [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-slate-900 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-slate-900 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-slate-900 [&_hr]:border-slate-200 [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-900 [&_pre]:p-3 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-emerald-300 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:p-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-white [&_th]:p-2 [&_ul]:list-disc [&_ul]:pl-5";
 
 export default function EditorialsPage() {
   const [problems, setProblems] = useState([]);
@@ -68,6 +73,15 @@ export default function EditorialsPage() {
       problem.title.toLowerCase().includes(normalizedQuery),
     );
   }, [problems, searchQuery]);
+
+  const markdownPreviewHtml = useMemo(() => {
+    const renderedMarkdown = marked.parse(markdownContent, {
+      breaks: true,
+      gfm: true,
+    });
+
+    return DOMPurify.sanitize(renderedMarkdown);
+  }, [markdownContent]);
 
   const handleSelectProblem = async (problem) => {
     setSelectedProblem(problem);
@@ -141,8 +155,8 @@ export default function EditorialsPage() {
           navExtra={<AdminMoreMenu />}
         />
 
-        <main className="mx-auto max-w-7xl px-6 py-8 pb-20">
-          <div className="mb-8">
+        <main className="w-full px-4 py-6 pb-10 sm:px-6 lg:px-8 2xl:px-10">
+          <div className="mb-6">
             <h1 className="text-3xl font-bold tracking-tight text-slate-900">
               Manage Editorials
             </h1>
@@ -164,8 +178,8 @@ export default function EditorialsPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="flex h-[700px] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-1">
+          <div className="grid grid-cols-1 gap-5 lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[360px_minmax(0,1fr)]">
+            <div className="flex h-[calc(100vh-11rem)] min-h-[720px] min-w-0 flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
               <div className="rounded-t-2xl border-b border-slate-100 bg-slate-50/50 p-4">
                 <h2 className="mb-3 text-[14px] font-bold text-slate-800">
                   Select Problem
@@ -217,7 +231,7 @@ export default function EditorialsPage() {
               </div>
             </div>
 
-            <div className="flex h-[700px] flex-col rounded-2xl border border-slate-200 bg-white shadow-sm lg:col-span-2">
+            <div className="flex h-[calc(100vh-11rem)] min-h-[720px] min-w-0 flex-col rounded-2xl border border-slate-200 bg-white shadow-sm">
               {selectedProblem ? (
                 <>
                   <div className="flex items-center justify-between rounded-t-2xl border-b border-slate-100 bg-slate-50/50 p-4">
@@ -262,12 +276,41 @@ export default function EditorialsPage() {
                           <label className="mb-2 block text-[13px] font-semibold text-slate-700">
                             Intuition & Approach (Markdown)
                           </label>
-                          <textarea
-                            value={markdownContent}
-                            onChange={(e) => setMarkdownContent(e.target.value)}
-                            className="h-40 w-full resize-y rounded-xl border border-slate-200 p-4 font-mono text-[13px] transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10"
-                            placeholder="Write your explanation here..."
-                          />
+                          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.12fr)_minmax(0,1fr)]">
+                            <div>
+                              <div className="mb-2 text-[11px] font-bold tracking-wide text-slate-400 uppercase">
+                                Editor
+                              </div>
+                              <textarea
+                                value={markdownContent}
+                                onChange={(e) =>
+                                  setMarkdownContent(e.target.value)
+                                }
+                                className="h-80 w-full resize-y rounded-xl border border-slate-200 p-4 font-mono text-[13px] transition outline-none focus:border-amber-400 focus:ring-4 focus:ring-amber-400/10"
+                                placeholder="Write your explanation here..."
+                              />
+                            </div>
+
+                            <div>
+                              <div className="mb-2 text-[11px] font-bold tracking-wide text-slate-400 uppercase">
+                                Preview
+                              </div>
+                              <div className="h-80 overflow-y-auto rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                {markdownContent.trim() ? (
+                                  <div
+                                    className={markdownPreviewClasses}
+                                    dangerouslySetInnerHTML={{
+                                      __html: markdownPreviewHtml,
+                                    }}
+                                  />
+                                ) : (
+                                  <p className="text-[13px] text-slate-400">
+                                    No markdown content yet.
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                         <div>
                           <label className="mb-2 block text-[13px] font-semibold text-slate-700">
@@ -276,7 +319,7 @@ export default function EditorialsPage() {
                           <textarea
                             value={codeContent}
                             onChange={(e) => setCodeContent(e.target.value)}
-                            className="h-48 w-full resize-y rounded-xl border border-slate-800 bg-slate-900 p-4 font-mono text-[13px] text-emerald-400 outline-none"
+                            className="h-56 w-full resize-y rounded-xl border border-slate-800 bg-slate-900 p-4 font-mono text-[13px] text-emerald-400 outline-none"
                             placeholder="Paste optimal code..."
                             spellCheck="false"
                           />
