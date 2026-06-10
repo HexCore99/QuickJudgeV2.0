@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import DOMPurify from "dompurify";
+import { marked } from "marked";
 import {
   BookOpen,
   Check,
@@ -13,8 +15,12 @@ import SubmissionsPanel from "../../profile/components/SubmissionsPanel";
 import { getProblemSubmissionsApi } from "../../submissions/submissionsApi";
 import ProblemDifficultyBadge from "./ProblemDifficultyBadge";
 
-function CopyButton({ text }) {
+function CopyButton({ text, tone = "light" }) {
   const [copied, setCopied] = useState(false);
+  const buttonClasses =
+    tone === "dark"
+      ? "rounded-md p-1 text-slate-400 transition hover:bg-white/10 hover:text-slate-100"
+      : "rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600";
 
   function handleCopy() {
     navigator.clipboard.writeText(text).then(() => {
@@ -27,7 +33,7 @@ function CopyButton({ text }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="rounded-md p-1 text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+      className={buttonClasses}
       title="Copy"
     >
       {copied ? (
@@ -97,6 +103,9 @@ const LEFT_TABS = [
   { key: "editorial", label: "Editorial", icon: BookOpen },
 ];
 
+const editorialMarkdownClasses =
+  "space-y-3 text-[14px] leading-7 text-slate-600 [&_a]:font-medium [&_a]:text-amber-700 [&_a]:underline [&_blockquote]:border-l-4 [&_blockquote]:border-amber-300 [&_blockquote]:bg-white [&_blockquote]:py-2 [&_blockquote]:pr-3 [&_blockquote]:pl-4 [&_code]:rounded [&_code]:bg-slate-200 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[13px] [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-slate-900 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-slate-900 [&_h3]:text-base [&_h3]:font-semibold [&_h3]:text-slate-900 [&_hr]:border-slate-200 [&_ol]:list-decimal [&_ol]:pl-5 [&_pre]:overflow-x-auto [&_pre]:rounded-lg [&_pre]:bg-slate-900 [&_pre]:p-3 [&_pre_code]:bg-transparent [&_pre_code]:p-0 [&_pre_code]:text-emerald-300 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-slate-200 [&_td]:p-2 [&_th]:border [&_th]:border-slate-200 [&_th]:bg-white [&_th]:p-2 [&_ul]:list-disc [&_ul]:pl-5";
+
 function isPositiveInteger(value) {
   const numberValue = Number(value);
 
@@ -115,6 +124,15 @@ function getContestProblemCode(problem, contestId) {
   }
 
   return problem?.contestProblemCode || problem?.id || null;
+}
+
+function getSafeExternalUrl(value) {
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) ? url.href : "";
+  } catch {
+    return "";
+  }
 }
 
 function timeAgo(dateStr) {
@@ -392,22 +410,96 @@ function SubmissionsContent({ problem, contestId, refreshKey }) {
   );
 }
 
-function EditorialContent({ hasEditorial }) {
-  if (hasEditorial) {
+function EditorialCodeBlock({ code }) {
+  const normalizedCode = code.replace(/\s+$/, "");
+  const lines = normalizedCode.split("\n");
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-slate-200 bg-slate-950 shadow-sm">
+      <div className="flex items-center justify-between border-b border-white/10 bg-slate-900 px-4 py-2.5">
+        <div>
+          <p className="text-[12px] font-semibold text-slate-100">
+            Optimal Code Solution
+          </p>
+          <p className="mt-0.5 text-[11px] text-slate-400">C++17</p>
+        </div>
+        <CopyButton text={normalizedCode} tone="dark" />
+      </div>
+
+      <div className="max-h-[520px] overflow-auto">
+        <ol className="min-w-max py-3 font-mono text-[13px] leading-6">
+          {lines.map((line, index) => (
+            <li
+              key={`${index}-${line}`}
+              className="grid grid-cols-[3rem_minmax(0,1fr)] px-4 text-slate-100 hover:bg-white/[0.03]"
+            >
+              <span className="pr-4 text-right text-slate-500 select-none">
+                {index + 1}
+              </span>
+              <code className="whitespace-pre text-slate-100">
+                {line || " "}
+              </code>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </div>
+  );
+}
+
+function EditorialContent({ editorial }) {
+  const markdownContent = editorial?.markdownContent?.trim() || "";
+  const codeContent = editorial?.codeContent?.trim() || "";
+  const videoLink = getSafeExternalUrl(editorial?.videoLink?.trim() || "");
+  const markdownHtml = useMemo(() => {
+    if (!markdownContent) {
+      return "";
+    }
+
+    const renderedMarkdown = marked.parse(markdownContent, {
+      breaks: true,
+      gfm: true,
+    });
+
+    return DOMPurify.sanitize(renderedMarkdown);
+  }, [markdownContent]);
+
+  if (markdownContent || codeContent || videoLink) {
     return (
       <div className="px-5 py-6 sm:px-7">
         <h2 className="mb-4 text-lg font-bold text-slate-800">Editorial</h2>
-        <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 px-6 py-6 text-[14px] leading-7 text-slate-600">
-          <p>
-            Start by observing the useful invariant hidden in the statement,
-            then reduce the search space using a hash-based lookup or greedy
-            state transition depending on the language you prefer.
-          </p>
-          <p>
-            The intended solution maintains the minimal amount of information
-            needed to answer each step in linear or near-linear time, which
-            keeps it within the provided limits.
-          </p>
+
+        <div className="space-y-5">
+          {markdownContent && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50 px-6 py-6">
+              <div
+                className={editorialMarkdownClasses}
+                dangerouslySetInnerHTML={{ __html: markdownHtml }}
+              />
+            </div>
+          )}
+
+          {codeContent && (
+            <section>
+              <EditorialCodeBlock code={codeContent} />
+            </section>
+          )}
+
+          {videoLink && (
+            <section>
+              <h3 className="mb-2 text-base font-bold text-slate-800">
+                Video Walkthrough
+              </h3>
+              <a
+                href={videoLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex rounded-lg border border-amber-200 bg-amber-50 px-4 py-2 text-[13px] font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100"
+              >
+                Open walkthrough
+              </a>
+            </section>
+          )}
         </div>
       </div>
     );
@@ -421,9 +513,6 @@ function EditorialContent({ hasEditorial }) {
         <BookOpen size={40} className="mx-auto mb-3 text-slate-300" />
         <p className="text-[14px] font-medium text-slate-500">
           Editorial is not available yet for this problem.
-        </p>
-        <p className="mt-1 text-[13px] text-slate-400">
-          This view is wired and ready for real content later.
         </p>
       </div>
     </div>
@@ -478,7 +567,7 @@ function ProblemStatement({ problem, contestId, submissionRefreshKey = 0 }) {
           />
         )}
         {!contestId && currentActiveTab === "editorial" && (
-          <EditorialContent hasEditorial={problem.hasEditorial} />
+          <EditorialContent editorial={problem.editorial} />
         )}
       </div>
     </div>
