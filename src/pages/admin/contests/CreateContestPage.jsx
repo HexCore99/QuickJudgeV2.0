@@ -60,6 +60,73 @@ function toDateTimeInputValue(value) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function getCurrentDateTimeInputValue() {
+  const date = new Date();
+  date.setSeconds(0, 0);
+
+  return toDateTimeInputValue(date);
+}
+
+function addMinutesToDateTimeInputValue(value, minutes) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return "";
+
+  date.setMinutes(date.getMinutes() + minutes);
+
+  return toDateTimeInputValue(date);
+}
+
+function isDateTimeBefore(value, minimumValue) {
+  const date = new Date(value);
+  const minimumDate = new Date(minimumValue);
+
+  if (Number.isNaN(date.getTime()) || Number.isNaN(minimumDate.getTime())) {
+    return false;
+  }
+
+  return date < minimumDate;
+}
+
+function getLaterDateTimeInputValue(firstValue, secondValue) {
+  if (!firstValue) return secondValue || "";
+  if (!secondValue) return firstValue;
+
+  return isDateTimeBefore(firstValue, secondValue) ? secondValue : firstValue;
+}
+
+function getMinimumEndTime(startTime, minimumStartTime) {
+  const nextMinuteAfterStart = startTime
+    ? addMinutesToDateTimeInputValue(startTime, 1)
+    : "";
+
+  return getLaterDateTimeInputValue(minimumStartTime, nextMinuteAfterStart);
+}
+
+function clampDateTimeToMinimum(value, minimumValue) {
+  if (!value || !minimumValue) return value;
+
+  return isDateTimeBefore(value, minimumValue) ? minimumValue : value;
+}
+
+function getMinimumTimeForDate(selectedDate, minimumDateTime) {
+  const minimumParts = splitDateTimeInputValue(minimumDateTime);
+
+  return selectedDate && selectedDate === minimumParts.date
+    ? minimumParts.time
+    : "";
+}
+
+function buildDefaultCreateForm() {
+  const startTime = getCurrentDateTimeInputValue();
+
+  return {
+    ...EMPTY_FORM,
+    startTime,
+    endTime: addMinutesToDateTimeInputValue(startTime, 60),
+  };
+}
+
 function splitDateTimeInputValue(value) {
   if (!value) {
     return { date: "", time: "" };
@@ -202,8 +269,24 @@ export default function CreateContestPage() {
     key: null,
     values: {},
   });
+  const [createFormDefaults] = useState(() => buildDefaultCreateForm());
+  const [minimumStartTime, setMinimumStartTime] = useState(() =>
+    getCurrentDateTimeInputValue(),
+  );
   const [actionError, setActionError] = useState(null);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (isEditMode) {
+      return undefined;
+    }
+
+    const timerId = window.setInterval(() => {
+      setMinimumStartTime(getCurrentDateTimeInputValue());
+    }, 30 * 1000);
+
+    return () => window.clearInterval(timerId);
+  }, [isEditMode]);
 
   useEffect(() => {
     if (isEditMode) {
@@ -282,7 +365,7 @@ export default function CreateContestPage() {
           endTime: toDateTimeInputValue(editingContest.endTime),
           password: "",
         }
-      : EMPTY_FORM;
+      : createFormDefaults;
   const draftValues = formDraft.key === formKey ? formDraft.values : {};
   const formData = { ...baseFormData, ...draftValues };
   const displayedIsRated = isEditMode
@@ -414,12 +497,42 @@ export default function CreateContestPage() {
       ...currentParts,
       [partName]: value,
     };
+    const currentMinimumStartTime = getCurrentDateTimeInputValue();
+    let nextValue = composeDateTimeInputValue(nextParts.date, nextParts.time);
+    const adjustedValues = {};
+
+    if (!isEditMode) {
+      if (fieldName === "startTime") {
+        nextValue = clampDateTimeToMinimum(nextValue, currentMinimumStartTime);
+        adjustedValues.startTime = nextValue;
+
+        const minimumEndTime = getMinimumEndTime(
+          nextValue,
+          currentMinimumStartTime,
+        );
+
+        if (
+          formData.endTime &&
+          isDateTimeBefore(formData.endTime, minimumEndTime)
+        ) {
+          adjustedValues.endTime = minimumEndTime;
+        }
+      } else {
+        nextValue = clampDateTimeToMinimum(
+          nextValue,
+          getMinimumEndTime(formData.startTime, currentMinimumStartTime),
+        );
+        adjustedValues.endTime = nextValue;
+      }
+    } else {
+      adjustedValues[fieldName] = nextValue;
+    }
 
     setFormDraft((prev) => ({
       key: formKey,
       values: {
         ...(prev.key === formKey ? prev.values : {}),
-        [fieldName]: composeDateTimeInputValue(nextParts.date, nextParts.time),
+        ...adjustedValues,
       },
     }));
   }
@@ -446,6 +559,15 @@ export default function CreateContestPage() {
 
     if (isEditMode && isEndedContest) {
       setActionError("Ended contests cannot be edited.");
+      return;
+    }
+
+    if (
+      !isEditMode &&
+      formData.startTime &&
+      isDateTimeBefore(formData.startTime, minimumStartTime)
+    ) {
+      setActionError("Start time cannot be before the current time.");
       return;
     }
 
@@ -546,9 +668,21 @@ export default function CreateContestPage() {
   );
   const startTimeParts = splitDateTimeInputValue(formData.startTime);
   const endTimeParts = splitDateTimeInputValue(formData.endTime);
+  const minimumStartParts = splitDateTimeInputValue(minimumStartTime);
+  const minimumEndTime = getMinimumEndTime(formData.startTime, minimumStartTime);
+  const minimumEndParts = splitDateTimeInputValue(minimumEndTime);
+  const startTimeMinValue = !isEditMode
+    ? getMinimumTimeForDate(startTimeParts.date, minimumStartTime)
+    : "";
+  const endTimeMinValue = !isEditMode
+    ? getMinimumTimeForDate(endTimeParts.date, minimumEndTime)
+    : "";
+  const isStartTimeInPast =
+    !isEditMode && isDateTimeBefore(formData.startTime, minimumStartTime);
   const canSaveSchedule =
     formData.startTime &&
     formData.endTime &&
+    !isStartTimeInPast &&
     new Date(formData.endTime) > new Date(formData.startTime);
   const canCreateContest =
     formData.title.trim() &&
@@ -1114,6 +1248,7 @@ export default function CreateContestPage() {
                             type="date"
                             name="startDate"
                             value={startTimeParts.date}
+                            min={!isEditMode ? minimumStartParts.date : undefined}
                             onChange={(e) =>
                               handleSchedulePartChange(
                                 "startTime",
@@ -1137,6 +1272,7 @@ export default function CreateContestPage() {
                           disabled={isEndedContest}
                           inputClasses={inputClasses}
                           lockedClasses={scheduleLockedClasses}
+                          minValue={startTimeMinValue}
                         />
                       </div>
                     </div>
@@ -1151,6 +1287,7 @@ export default function CreateContestPage() {
                             type="date"
                             name="endDate"
                             value={endTimeParts.date}
+                            min={!isEditMode ? minimumEndParts.date : undefined}
                             onChange={(e) =>
                               handleSchedulePartChange(
                                 "endTime",
@@ -1174,6 +1311,7 @@ export default function CreateContestPage() {
                           disabled={isEndedContest}
                           inputClasses={inputClasses}
                           lockedClasses={scheduleLockedClasses}
+                          minValue={endTimeMinValue}
                         />
                       </div>
                     </div>

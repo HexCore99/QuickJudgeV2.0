@@ -49,12 +49,59 @@ function getTimeParts(value) {
   };
 }
 
+function timeToMinutes(value) {
+  if (!value) return null;
+
+  const [hourText, minuteText] = value.split(":");
+  const hour = Number(hourText);
+  const minute = Number(minuteText);
+
+  if (
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return null;
+  }
+
+  return hour * 60 + minute;
+}
+
+function isTimeBeforeMinimum(hour, minute, minValue) {
+  const minimumMinutes = timeToMinutes(minValue);
+
+  if (minimumMinutes === null) return false;
+
+  return Number(hour) * 60 + Number(minute) < minimumMinutes;
+}
+
+function getAllowedMinuteForHour(hour, selectedMinute, minValue) {
+  const minimumMinutes = timeToMinutes(minValue);
+  const fallbackMinute = selectedMinute || "00";
+
+  if (minimumMinutes === null) return fallbackMinute;
+
+  const candidateMinutes = Number(hour) * 60 + Number(fallbackMinute);
+
+  if (candidateMinutes >= minimumMinutes) return fallbackMinute;
+
+  const minimumHour = Math.floor(minimumMinutes / 60);
+
+  return Number(hour) === minimumHour
+    ? String(minimumMinutes % 60).padStart(2, "0")
+    : "00";
+}
+
 export default function TimePickerField({
   value,
   onChange,
   disabled = false,
   inputClasses,
   lockedClasses = "",
+  minValue = "",
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef(null);
@@ -85,10 +132,22 @@ export default function TimePickerField({
   }, [isOpen]);
 
   function selectHour(nextHour) {
-    onChange(`${nextHour}:${selectedMinute || "00"}`);
+    if (isTimeBeforeMinimum(nextHour, "59", minValue)) return;
+
+    onChange(
+      `${nextHour}:${getAllowedMinuteForHour(
+        nextHour,
+        selectedMinute,
+        minValue,
+      )}`,
+    );
   }
 
   function selectMinute(nextMinute) {
+    if (isTimeBeforeMinimum(selectedHour || "00", nextMinute, minValue)) {
+      return;
+    }
+
     onChange(`${selectedHour || "00"}:${nextMinute}`);
     setIsOpen(false);
   }
@@ -123,20 +182,29 @@ export default function TimePickerField({
                 HOUR
               </p>
               <div className="max-h-44 space-y-1 overflow-y-auto pr-1">
-                {HOURS.map((hour) => (
-                  <button
-                    key={hour}
-                    type="button"
-                    onClick={() => selectHour(hour)}
-                    className={`w-full rounded-lg px-2.5 py-1.5 text-left text-xs font-semibold transition ${
-                      selectedHour === hour
-                        ? "bg-amber-100 text-amber-700"
-                        : "text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    {formatHourLabel(hour)}
-                  </button>
-                ))}
+                {HOURS.map((hour) => {
+                  const isDisabled = isTimeBeforeMinimum(
+                    hour,
+                    "59",
+                    minValue,
+                  );
+
+                  return (
+                    <button
+                      key={hour}
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => selectHour(hour)}
+                      className={`w-full rounded-lg px-2.5 py-1.5 text-left text-xs font-semibold transition disabled:cursor-not-allowed disabled:text-slate-300 ${
+                        selectedHour === hour
+                          ? "bg-amber-100 text-amber-700 disabled:bg-slate-50"
+                          : "text-slate-600 hover:bg-slate-100 disabled:hover:bg-transparent"
+                      }`}
+                    >
+                      {formatHourLabel(hour)}
+                    </button>
+                  );
+                })}
               </div>
             </div>
             <div>
@@ -144,20 +212,29 @@ export default function TimePickerField({
                 MIN
               </p>
               <div className="max-h-44 grid grid-cols-2 gap-1 overflow-y-auto pr-1">
-                {MINUTES.map((minute) => (
-                  <button
-                    key={minute}
-                    type="button"
-                    onClick={() => selectMinute(minute)}
-                    className={`rounded-lg px-2 py-1.5 text-center font-mono text-xs font-semibold transition ${
-                      selectedMinute === minute
-                        ? "bg-amber-100 text-amber-700"
-                        : "text-slate-600 hover:bg-slate-100"
-                    }`}
-                  >
-                    {minute}
-                  </button>
-                ))}
+                {MINUTES.map((minute) => {
+                  const isDisabled = isTimeBeforeMinimum(
+                    selectedHour || "00",
+                    minute,
+                    minValue,
+                  );
+
+                  return (
+                    <button
+                      key={minute}
+                      type="button"
+                      disabled={isDisabled}
+                      onClick={() => selectMinute(minute)}
+                      className={`rounded-lg px-2 py-1.5 text-center font-mono text-xs font-semibold transition disabled:cursor-not-allowed disabled:text-slate-300 ${
+                        selectedMinute === minute
+                          ? "bg-amber-100 text-amber-700 disabled:bg-slate-50"
+                          : "text-slate-600 hover:bg-slate-100 disabled:hover:bg-transparent"
+                      }`}
+                    >
+                      {minute}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
